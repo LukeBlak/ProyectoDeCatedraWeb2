@@ -15,7 +15,6 @@ export const useCupones = () => {
     const ESTADO_CUPON_CANJEADO = "Canjeado";
     const ESTADO_CUPON_VENCIDO = "Vencido";
     
-    
     const { user } = useAuth();
 
     const [cupones, setCupones] = useState([]);
@@ -179,12 +178,14 @@ export const useCupones = () => {
         return 'Cupón inválido';
     };
 
+    // Este useEffect hace que los cupones se carguen automáticamente al entrar a la pantalla
     useEffect(() => {
         if (user?.id) {
             fetchCupones();
         }
     }, [user, fetchCupones]);
 
+    // Cálculos rápidos para mostrar en el dashboard (totales, ahorros, etc.)
     const estadisticas = {
         total: cupones.length,
         disponibles: cuponesDisponibles.length,

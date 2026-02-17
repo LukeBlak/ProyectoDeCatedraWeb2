@@ -12,6 +12,15 @@ export const formatearPrecio = (precio) => {
  * @param {string} fecha - Fecha en formato ISO o string
  * @returns {string} Fecha formateada (DD/MM/YYYY)
  */
+export const formatearFecha = (fecha) => {
+  if (!fecha) return 'N/A';
+  
+  const date = new Date(fecha);
+  const opciones = { year: 'numeric', month: 'long', day: 'numeric' };
+  
+  return date.toLocaleDateString('es-ES', opciones);
+};
+
 export const formatearFechaCorta = (fecha) => {
     if (!fecha) return 'N/A';
 

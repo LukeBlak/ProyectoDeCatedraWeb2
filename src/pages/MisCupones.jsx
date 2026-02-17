@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { useCupones } from '../hooks/useCupones';
-import CuponCard from '../components/cupones/CuponCard';
-import CuponDetalle from '../components/cupones/CuponDetalle';
+import {CuponCard} from '../components/cupones/CuponCard';
+import {CuponDetalle} from '../components/cupones/CuponDetalle';
 import { generarPDFCupon } from '../utils/pdfGenerator';
+import { Header } from '../components/common/Header';
+import { Footer } from '../components/common/Footer';
 
 export const MisCupones = () => {
+    
     const {
         cuponesDisponibles,
         cuponesCanjeados,
@@ -140,6 +143,8 @@ export const MisCupones = () => {
     }
 
     return (
+        <>
+        <Header />
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="container mx-auto px-4 max-w-7xl">
 
@@ -259,5 +264,7 @@ export const MisCupones = () => {
                 )}
             </div>
         </div>
+        <Footer />
+    </>
     );
 };
