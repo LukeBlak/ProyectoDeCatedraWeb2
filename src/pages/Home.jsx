@@ -41,6 +41,17 @@ export const Home = () => {
       rubro: "fitness",
       color: "from-emerald-400 to-green-500",
     },
+    {
+        id: 4,
+        titulo: " 25% OFF",
+        empresa: "Academia Digital",
+        precioRegular: 120,
+        precioOferta: 90,
+        descuento: 25,
+        icono: "/icons/online-course.svg",
+        rubro: "entretenimiento",
+        color: "from-purple-400 to-indigo-500",
+    }
   ];
 
   const rubros = [
