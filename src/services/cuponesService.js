@@ -1,105 +1,144 @@
-// src/services/cuponesService.js
 
-const BASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const API_KEY = import.meta.env.VITE_SUPABASE_KEY;
+import {
+  collection,
+  query, 
+  where, 
+  getDocs,
+  doc,
+  addDoc,
+  updateDoc, 
+  serverTimestamp
+} from 'firebase/firestore';
+import { db } from '../config/firebase'
 
 export const cuponesService = {
 
-  // ==================== LECTURA ====================
-
   // Obtener todos los cupones de un usuario
   getCuponesByUser: async (usuarioId) => {
-    const response = await fetch(`${BASE_URL}/rest/v1/cupones?usuario_id=eq.${usuarioId}`, {
-      headers: {
-        'apikey': API_KEY,
-        'Authorization': `Bearer ${API_KEY}`
+    try{
+      const queryByCode
+       = query(
+        collection(db, 'cupones'),
+        where('usuarioId', '==', usuarioId)
+      );
+
+      const querySnapshot = await getDocs(queryByCode);
+
+      if (querySnapshot.empty) {
+        throw new Error('Cupón no encontrado');
       }
-    });
-    if (!response.ok) throw new Error('Error al obtener cupones');
-    return response.json();
+      
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+
+    } catch (error) {
+      console.error('Error al buscar cupon:', error);
+      throw error;
+    }
   },
 
   // Obtener un cupón por su código
   getCuponByCodigo: async (codigo) => {
-    const response = await fetch(`${BASE_URL}/rest/v1/cupones?codigo=eq.${codigo}`, {
-      headers: {
-        'apikey': API_KEY,
-        'Authorization': `Bearer ${API_KEY}`
-      }
-    });
-    if (!response.ok) throw new Error('Cupón no encontrado');
-    const data = await response.json();
-    return data[0];
-  },
+    try{
+      const queryByCode = query(
+        collection(db, 'cupones'),
+        where('codigo', '==', codigo)
+      );
 
-  // Obtener un cupón por su ID
-  getCuponById: async (cuponId) => {
-    const response = await fetch(`${BASE_URL}/rest/v1/cupones?id=eq.${cuponId}`, {
-      headers: {
-        'apikey': API_KEY,
-        'Authorization': `Bearer ${API_KEY}`
-      }
-    });
-    if (!response.ok) throw new Error('Cupón no encontrado');
-    const data = await response.json();
-    return data[0];
+      const querySnapshot = await getDocs(queryByCode
+
+      );
+      const cupones = [];
+      
+      querySnapshot.forEach((doc) => {
+        cupones.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      return cupones;
+    } catch (error) {
+      console.error('Error al obtener cupones:', error);
+      throw error;
+    }
   },
 
   // ==================== ESCRITURA ====================
 
   // Crear cupones después de una compra
   crearCupones: async (datosCupones) => {
-    const response = await fetch(`${BASE_URL}/rest/v1/cupones`, {
-      method: 'POST',
-      headers: {
-        'apikey': API_KEY,
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(datosCupones)
-    });
-    if (!response.ok) throw new Error('Error al crear cupones');
-    return response.json();
+    try {
+      // crea una variable vacía
+      const cuponesCreados = [];
+      
+      // Se encarga de procesar cada dato del cupón
+      for (const cuponData of datosCupones) {
+        const docRef = await addDoc(collection(db, 'cupones'), {
+          ...cuponData,
+          fechaCreacion: serverTimestamp(),
+          estado: 'disponible'
+        });
+        
+        // se encarga de subir el cupon al sistmea
+        cuponesCreados.push({
+          id: docRef.id,
+          ...cuponData
+        });
+      }
+      
+      return cuponesCreados;
+    } catch (error) {
+      console.error('Error al crear cupones:', error);
+      throw error;
+    }
   },
-
-  // ==================== ACTUALIZACIÓN ====================
 
   // Canjear un cupón
   canjearCupon: async (codigo, dui) => {
-    // Paso 1: Verificar que el cupón existe
-    const cupon = await cuponesService.getCuponByCodigo(codigo);
+    try {
+      // Busca el cupón por código
+      const cupon = await cuponesService.getCuponByCodigo(codigo);
+      
+      // Validaciones 
 
-    // Paso 2: Validar el cupón
-    if (!cupon) throw new Error('Cupón no encontrado');
-    if (cupon.estado === 'canjeado') throw new Error('Este cupón ya fue canjeado');
-    if (new Date(cupon.fecha_limite_uso) <= new Date()) throw new Error('Este cupón está vencido');
-    if (cupon.dui !== dui) throw new Error('El DUI no coincide con el comprador');
-
-    // Paso 3: Actualizar estado a canjeado
-    const response = await fetch(`${BASE_URL}/rest/v1/cupones?id=eq.${cupon.id}`, {
-      method: 'PATCH',
-      headers: {
-        'apikey': API_KEY,
-        'Authorization': `Bearer ${API_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify({
+      //si el cupón ya es canjeado no se puede canjear de nuevo
+      if (cupon.estado === 'canjeado') {
+        throw new Error('Este cupón ya fue canjeado');
+      }
+      
+      // si el cupón ya venció no se puede usar de nuevo
+      if (new Date(cupon.fechaLimiteUso) <= new Date()) {
+        throw new Error('Este cupón está vencido');
+      }
+      
+      // Verifica si el dui coincide con el comprador para poder usarlo
+      if (cupon.dui !== dui) {
+        throw new Error('El DUI no coincide con el comprador');
+      }
+      
+      // Actualizar estado a canjeado
+      const cuponRef = doc(db, 'cupones', cupon.id);
+      await updateDoc(cuponRef, {
         estado: 'canjeado',
-        fecha_canje: new Date().toISOString()
-      })
-    });
-
-    if (!response.ok) throw new Error('Error al canjear el cupón');
-    return response.json();
+        fechaCanje: serverTimestamp()
+      });
+      
+      return { success: true, message: 'Cupón canjeado exitosamente' };
+    } catch (error) {
+      console.error('Error al canjear cupón:', error);
+      throw error;
+    }
   },
 
   // ==================== UTILIDADES ====================
 
   // Generar código único de cupón (codigoEmpresa + 7 dígitos)
-  generarCodigo: (codigoEmpresa) => {
-    const numerosAleatorios = Math.floor(1000000 + Math.random() * 9000000);
-    return `${codigoEmpresa}${numerosAleatorios}`;
+  generarCodigo: (codigoUnico) => {
+    const numerosAleatorios = Math.floor(1000000 + Math.random() * 99999999);
+    return `${codigoUnico}${numerosAleatorios}`;
   }
 };
