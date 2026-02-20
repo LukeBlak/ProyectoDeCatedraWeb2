@@ -1,10 +1,19 @@
 // src/components/common/Navbar.jsx
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+  
 
   return (
     <nav className="container mx-auto px-4 py-4">
@@ -31,7 +40,7 @@ export const Navbar = () => {
               placeholder="Buscar ofertas, restaurantes, spas..."
               className="w-full px-6 py-3 rounded-full bg-white/90 backdrop-blur-sm text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-lg"
             />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
+            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-linear-to-r from-pink-500 to-purple-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition-all">
               🔍 Buscar
             </button>
           </div>
@@ -40,29 +49,72 @@ export const Navbar = () => {
         {/* Menú Desktop */}
         <div className="hidden md:flex items-center gap-4">
           <Link
-            to="/ofertas"
+            to="/"
             className="text-white hover:text-purple-200 font-medium transition-colors"
           >
             Ofertas
           </Link>
-          <Link
-            to="/mis-cupones"
-            className="text-white hover:text-purple-200 font-medium transition-colors"
-          >
-            Mis Cupones
-          </Link>
-          <Link
-            to="/login"
-            className="text-white hover:text-purple-200 font-medium transition-colors"
-          >
-            Iniciar Sesión
-          </Link>
-          <Link
-            to="/register"
-            className="bg-white text-purple-600 px-6 py-2 rounded-full font-bold hover:bg-purple-50 hover:shadow-lg transition-all"
-          >
-            Registrarse
-          </Link>
+          
+          {isAuthenticated ? (
+            <>
+              <Link
+                to="/mis-cupones"
+                className="text-white hover:text-purple-200 font-medium transition-colors"
+              >
+                Mis Cupones
+              </Link>
+              
+              {/* Dropdown de usuario */}
+              <div className="relative group">
+                <button className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-full transition-all">
+                  <div className="w-8 h-8 bg-linear-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {user?.nombres?.charAt(0)}{user?.apellidos?.charAt(0)}
+                  </div>
+                  <span className="text-white font-medium">
+                    {user?.nombres}
+                  </span>
+                  <span className="text-white">▼</span>
+                </button>
+                
+                {/* Dropdown menu */}
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <Link
+                    to="/mi-perfil"
+                    className="block px-4 py-3 text-gray-700 hover:bg-purple-50 rounded-t-lg transition-colors"
+                  >
+                    👤 Mi Perfil
+                  </Link>
+                  <Link
+                    to="/mis-cupones"
+                    className="block px-4 py-3 text-gray-700 hover:bg-purple-50 transition-colors"
+                  >
+                    🎫 Mis Cupones
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 rounded-b-lg transition-colors"
+                  >
+                    🚪 Cerrar Sesión
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/login"
+                className="text-white hover:text-purple-200 font-medium transition-colors"
+              >
+                Iniciar Sesión
+              </Link>
+              <Link
+                to="/register"
+                className="bg-white text-purple-600 px-6 py-2 rounded-full font-bold hover:bg-purple-50 hover:shadow-lg transition-all"
+              >
+                Registrarse
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Botón menú móvil */}
@@ -86,34 +138,60 @@ export const Navbar = () => {
           </div>
           <div className="flex flex-col gap-3">
             <Link
-              to="/ofertas"
+              to="/"
               className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
+              onClick={() => setMenuAbierto(false)}
             >
               Ofertas
             </Link>
-            <Link
-              to="/mis-cupones"
-              className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
-            >
-              Mis Cupones
-            </Link>
-            <Link
-              to="/login"
-              className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
-            >
-              Iniciar Sesión
-            </Link>
-            <Link
-              to="/register"
-              className="bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 px-4 rounded-lg text-center hover:shadow-lg transition-all"
-            >
-              Registrarse
-            </Link>
+            
+            {isAuthenticated ? (
+              <>
+                <Link
+                  to="/mis-cupones"
+                  className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
+                  onClick={() => setMenuAbierto(false)}
+                >
+                  Mis Cupones
+                </Link>
+                <Link
+                  to="/mi-perfil"
+                  className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
+                  onClick={() => setMenuAbierto(false)}
+                >
+                  👤 Mi Perfil ({user?.nombres})
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMenuAbierto(false);
+                  }}
+                  className="text-left text-red-600 hover:text-red-700 font-medium py-2 px-4 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  🚪 Cerrar Sesión
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-gray-800 hover:text-purple-600 font-medium py-2 px-4 hover:bg-purple-50 rounded-lg transition-colors"
+                  onClick={() => setMenuAbierto(false)}
+                >
+                  Iniciar Sesión
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-linear-to-r from-purple-600 to-pink-500 text-white font-bold py-3 px-4 rounded-lg text-center hover:shadow-lg transition-all"
+                  onClick={() => setMenuAbierto(false)}
+                >
+                  Registrarse
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
     </nav>
   );
 };
-
-export default Navbar;

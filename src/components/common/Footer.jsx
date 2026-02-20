@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 export const Footer = () => {
   return (
-    <footer className="bg-gradient-to-br from-sky-500 via-sky-600 to-emerald-500 text-white">
+    <footer className="bg-linear-to-br from-sky-500 via-sky-600 to-emerald-500 text-white">
       
       {/* Contenido principal */}
       <div className="container mx-auto px-4 py-12">

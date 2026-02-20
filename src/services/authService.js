@@ -101,7 +101,7 @@ export const authService = {
       const docRef = await addDoc(collection(db, 'usuarios'), nuevoUsuario);
 
       // Retornar usuario (sin contraseña)
-      const { password, ...usuarioSinPassword } = nuevoUsuario;
+      const {...usuarioSinPassword } = nuevoUsuario;
       return {
         id: docRef.id,
         ...usuarioSinPassword
