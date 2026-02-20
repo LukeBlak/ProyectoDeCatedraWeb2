@@ -11,15 +11,27 @@ export const Button = ({
   ...props 
 }) => {
   
-  const baseStyles = "font-bold rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2";
+  const baseStyles =
+    "font-bold rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 flex items-center justify-center gap-2";
   
   const variants = {
-    primary: "bg-gradient-to-r from-purple-600 to-pink-500 text-white hover:shadow-lg hover:scale-105 focus:ring-purple-500",
-    secondary: "bg-white text-purple-600 border-2 border-purple-600 hover:bg-purple-50 focus:ring-purple-500",
-    success: "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg hover:scale-105 focus:ring-green-500",
-    danger: "bg-gradient-to-r from-red-500 to-pink-600 text-white hover:shadow-lg hover:scale-105 focus:ring-red-500",
-    outline: "bg-transparent border-2 border-gray-300 text-gray-700 hover:border-purple-500 hover:text-purple-600 focus:ring-purple-500",
-    ghost: "bg-transparent text-purple-600 hover:bg-purple-50 focus:ring-purple-500"
+    primary:
+      "bg-gradient-to-r from-sky-400 to-emerald-400 text-white hover:shadow-lg hover:scale-105 focus:ring-sky-400",
+
+    secondary:
+      "bg-white text-sky-500 border-2 border-sky-400 hover:bg-sky-50 focus:ring-sky-400",
+
+    success:
+      "bg-gradient-to-r from-emerald-400 to-teal-500 text-white hover:shadow-lg hover:scale-105 focus:ring-emerald-400",
+
+    danger:
+      "bg-gradient-to-r from-rose-400 to-red-500 text-white hover:shadow-lg hover:scale-105 focus:ring-rose-400",
+
+    outline:
+      "bg-transparent border-2 border-sky-300 text-sky-500 hover:bg-sky-50 focus:ring-sky-400",
+
+    ghost:
+      "bg-transparent text-sky-500 hover:bg-sky-50 focus:ring-sky-400"
   };
   
   const sizes = {
@@ -28,7 +40,9 @@ export const Button = ({
     lg: "px-8 py-4 text-lg"
   };
   
-  const disabledStyles = disabled ? "opacity-50 cursor-not-allowed hover:scale-100" : "";
+  const disabledStyles = disabled
+    ? "opacity-50 cursor-not-allowed hover:scale-100"
+    : "";
   
   return (
     <button
