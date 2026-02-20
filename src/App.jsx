@@ -1,11 +1,10 @@
 
-
 import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider } from './context/AuthProvider'; // ← Cambio aquí
 import {AppRoutes} from './routes/AppRoutes';
 
-function App() {
+export function App() {
   return (
     <Router>
       <AuthProvider>

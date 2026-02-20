@@ -93,11 +93,11 @@ export const Home = () => {
             : ofertasDestacadas.filter((o) => o.rubro === rubroSeleccionado);
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="min-h-screen bg-linear-to-br from-purple-50 via-pink-50 to-blue-50">
             <Header />
 
             {/* Hero Section */}
-            <section className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white">
+            <section className="relative overflow-hidden bg-linear-to-r from-indigo-600 via-purple-600 to-pink-500 text-white">
                 <div className="absolute inset-0 bg-black/10"></div>
                 <div className="container mx-auto px-4 py-20 relative z-10">
                     <div className="max-w-4xl mx-auto text-center">
@@ -163,7 +163,7 @@ export const Home = () => {
                             key={rubro.id}
                             onClick={() => setRubroSeleccionado(rubro.id)}
                             className={`px-6 py-3 rounded-full font-semibold transition-all ${rubroSeleccionado === rubro.id
-                                    ? "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg scale-105"
+                                    ? "bg-linear-to-r from-purple-600 to-pink-500 text-white shadow-lg scale-105"
                                     : "bg-white text-gray-700 hover:bg-gray-100 shadow"
                                 }`}
                         >
@@ -196,7 +196,7 @@ export const Home = () => {
                         >
                             {/* Header de la card con gradiente */}
                             <div
-                                className={`bg-gradient-to-r ${oferta.color} p-8 text-center relative`}
+                                className={`bg-linear-to-r ${oferta.color} p-8 text-center relative`}
                             >
                                 <div className="absolute top-3 right-3 bg-white text-purple-600 font-bold px-3 py-1 rounded-full text-sm shadow">
                                     {oferta.descuento}% OFF
@@ -259,7 +259,7 @@ export const Home = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                         <div className="text-center">
-                            <div className="bg-gradient-to-br from-purple-100 to-pink-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                            <div className="bg-linear-to-br from-purple-100 to-pink-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                                 🔍
                             </div>
                             <h3 className="font-bold text-lg mb-2">1. Explora</h3>
@@ -268,14 +268,14 @@ export const Home = () => {
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                            <div className="bg-linear-to-br from-blue-100 to-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                                 🛒
                             </div>
                             <h3 className="font-bold text-lg mb-2">2. Compra</h3>
                             <p className="text-gray-600">Adquiere tu cupón de forma segura</p>
                         </div>
                         <div className="text-center">
-                            <div className="bg-gradient-to-br from-green-100 to-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                            <div className="bg-linear-to-br from-green-100 to-emerald-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                                 📱
                             </div>
                             <h3 className="font-bold text-lg mb-2">3. Recibe</h3>
@@ -284,7 +284,7 @@ export const Home = () => {
                             </p>
                         </div>
                         <div className="text-center">
-                            <div className="bg-gradient-to-br from-yellow-100 to-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
+                            <div className="bg-linear-to-br from-yellow-100 to-orange-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl">
                                 🎉
                             </div>
                             <h3 className="font-bold text-lg mb-2">4. Disfruta</h3>
@@ -297,7 +297,7 @@ export const Home = () => {
             </section>
 
             {/* CTA Final */}
-            <section className="bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 py-16">
+            <section className="bg-linear-to-r from-purple-600 via-pink-500 to-orange-400 py-16">
                 <div className="container mx-auto px-4 text-center text-white">
                     <h2 className="text-4xl font-bold mb-4">
                         ¿Listo para Empezar a Ahorrar?

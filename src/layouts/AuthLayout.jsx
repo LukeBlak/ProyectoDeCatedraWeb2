@@ -5,14 +5,14 @@ import { Link } from 'react-router-dom';
 
 export const AuthLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-linear-to-br from-purple-50 via-pink-50 to-blue-50">
       
       {/* Header simple */}
       <header className="bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-3xl">🎫</span>
-            <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-500">
+            <span className="text-2xl font-bold text-transparent bg-clip-text bg-linaer-to-r from-purple-600 to-pink-500">
               LA CUPONERA
             </span>
           </Link>
