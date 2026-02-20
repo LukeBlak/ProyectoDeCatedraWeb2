@@ -1,17 +1,18 @@
+
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MisCupones } from './pages/MisCupones';
-import { Home } from './pages/Home';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import {AppRoutes} from './routes/AppRoutes';
 
-
-export function App() {
+function App() {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Home/>} />
-        <Route path="/mis-cupones" element={<MisCupones />} />
-      </Routes>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </Router>
   );
 }
 
+export default App;
