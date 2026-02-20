@@ -62,7 +62,7 @@ export const Home = () => {
 
       {/* HERO */}
       <section className="bg-gradient-to-r from-sky-500 to-emerald-500 text-white py-24">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center flex justify-center items-center flex-col gap-6">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Ahorra más, vive mejor
           </h1>
