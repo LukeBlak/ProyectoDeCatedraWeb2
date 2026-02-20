@@ -13,7 +13,7 @@ export const Navbar = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 group">
           <div className="bg-white rounded-lg p-2 shadow-md group-hover:shadow-xl transition-shadow">
-            <span className="text-2xl">🎫</span>
+            <img src="/icons/cupon.png" alt="La Cuponera" className="w-6 h-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white tracking-tight">
