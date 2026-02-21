@@ -1,5 +1,3 @@
-// src/services/authService.js
-
 import { 
   collection, 
   query, 
@@ -12,10 +10,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
-// Función para hashear contraseñas (simple, en producción usa bcrypt)
+// Función para hashear contraseñas (simple, en producción se sugiere usar bcrypt)
 const hashPassword = (password) => {
-  // En producción deberías usar una librería como bcrypt
-  // Esto es solo para demostración
   return btoa(password); // Base64 encoding (NO seguro para producción real)
 };
 
@@ -122,7 +118,7 @@ export const authService = {
       }
 
       if (!isValidEmail(email)) {
-        throw new Error('Correo electrónico inválido');
+        throw new Error('Correo electrónico o contraseña inválidos. Por favor, cuelva a intentarlo');
       }
 
       // Buscar usuario por email
@@ -147,7 +143,7 @@ export const authService = {
 
       // Verificar contraseña
       if (hashPassword(password) !== userData.password) {
-        throw new Error('Contraseña incorrecta');
+        throw new Error('Correo electronico o contraseña invalidos. Por favor vuelva a intentarlo');
       }
 
       // Actualizar último acceso
@@ -157,10 +153,13 @@ export const authService = {
 
       // Retornar usuario (sin contraseña)
       const { password: _, ...usuarioSinPassword } = userData;
-      return {
-        id: userDoc.id,
-        ...usuarioSinPassword
+      const usuarioFinal = {
+        id: userDoc.id, ...usuarioSinPassword
       };
+
+      localStorage.setItem("user", JSON.stringify(usuarioFinal));
+
+      return usuarioFinal;
 
     } catch (error) {
       console.error('Error en login:', error);
@@ -168,55 +167,6 @@ export const authService = {
     }
   },
 
-  // ==================== RECUPERAR CONTRASEÑA ====================
-  solicitarRecuperacion: async (email) => {
-    try {
-      if (!isValidEmail(email)) {
-        throw new Error('Correo electrónico inválido');
-      }
-
-      // Buscar usuario
-      const q = query(
-        collection(db, 'usuarios'),
-        where('email', '==', email.toLowerCase())
-      );
-
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        // Por seguridad, no revelar si el email existe
-        return { success: true, message: 'Si el correo existe, recibirás instrucciones' };
-      }
-
-      const userDoc = querySnapshot.docs[0];
-
-      // Generar token de recuperación (6 dígitos)
-      const tokenRecuperacion = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiracionToken = new Date();
-      expiracionToken.setHours(expiracionToken.getHours() + 1); // Expira en 1 hora
-
-      // Guardar token
-      await updateDoc(doc(db, 'usuarios', userDoc.id), {
-        tokenRecuperacion: hashPassword(tokenRecuperacion),
-        expiracionToken: expiracionToken.toISOString()
-      });
-
-      // AQUÍ deberías enviar el email con el token
-      // Por ahora solo lo retornamos (en producción NO hacer esto)
-      console.log('Token de recuperación:', tokenRecuperacion);
-
-      return { 
-        success: true, 
-        message: 'Código de recuperación enviado a tu correo',
-        // SOLO PARA DESARROLLO - ELIMINAR EN PRODUCCIÓN
-        token: tokenRecuperacion 
-      };
-
-    } catch (error) {
-      console.error('Error al solicitar recuperación:', error);
-      throw error;
-    }
-  },
 
   // ==================== VERIFICAR TOKEN Y CAMBIAR CONTRASEÑA ====================
   recuperarPassword: async (email, token, nuevaPassword) => {
@@ -336,5 +286,12 @@ export const authService = {
       console.error('Error al actualizar perfil:', error);
       throw error;
     }
-  }
+  },
+
+  // ================================= LOGOUT ============================
+
+  logout: ()=>{
+    localStorage.removeItem("user");
+    return{success: true}
+  },
 };

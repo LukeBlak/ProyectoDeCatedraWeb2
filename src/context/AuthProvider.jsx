@@ -1,8 +1,6 @@
 // src/context/AuthProvider.jsx
 
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
 import { authService } from '../services/authService';
 import { AuthContext } from './AuthContext';
 
@@ -11,25 +9,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Escuchar cambios en Firebase Auth
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          // Obtener datos completos del usuario desde Firestore
-          const userData = await authService.getUserData(firebaseUser.uid);
-          setUser(userData);
-        } catch (error) {
-          console.error('Error al cargar datos del usuario:', error);
-          setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+  const storedUser = localStorage.getItem("user");
 
-    return () => unsubscribe();
-  }, []); // ✅ Array vacío - solo se ejecuta una vez
+  if (storedUser) {
+    setUser(JSON.parse(storedUser));
+  }
+
+  setLoading(false);
+  }, []);
 
   const register = async (userData) => {
     const newUser = await authService.register(userData);

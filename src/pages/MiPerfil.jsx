@@ -3,12 +3,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 import {Header} from '../components/common/Header';
 import {Footer} from '../components/common/Footer';
 import {Button} from '../components/common/Button';
 
 export const MiPerfil = () => {
-  const { user, actualizarUsuario, logout } = useAuth();
+  const { user, actualizarUsuario } = useAuth();
   
   const [editando, setEditando] = useState(false);
   const [cambiandoPassword, setCambiandoPassword] = useState(false);
@@ -82,6 +83,15 @@ export const MiPerfil = () => {
       setLoading(false);
     }
   };
+
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+  await logout();  
+  navigate("/"); 
+  };
+
 
   return (
     <>
@@ -328,7 +338,7 @@ export const MiPerfil = () => {
           <div className="text-center">
             <Button
               variant="danger"
-              onClick={logout}
+              onClick={handleLogout}
             >
               🚪 Cerrar Sesión
             </Button>
