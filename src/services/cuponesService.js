@@ -7,35 +7,44 @@ import {
   doc,
   addDoc,
   updateDoc, 
-  serverTimestamp
+  serverTimestamp,
+  Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase'
-
 export const cuponesService = {
 
   // Obtener todos los cupones de un usuario
   getCuponesByUser: async (usuarioId) => {
-    try{
-      const queryByCode
-       = query(
+    try {
+      console.log('🔍 Buscando cupones para usuario:', usuarioId);
+      
+      const q = query(
         collection(db, 'cupones'),
         where('usuarioId', '==', usuarioId)
       );
 
-      const querySnapshot = await getDocs(queryByCode);
-
+      const querySnapshot = await getDocs(q);
+      
+      // ✅ NO lanzar error si está vacío, devolver array vacío
       if (querySnapshot.empty) {
-        throw new Error('Cupón no encontrado');
+        console.log('📭 No se encontraron cupones para este usuario');
+        return []; // ← Devolver array vacío, no error
       }
       
-      const doc = querySnapshot.docs[0];
-      return {
-        id: doc.id,
-        ...doc.data()
-      };
-
+      // ✅ Iterar TODOS los documentos, no solo el primero
+      const cupones = [];
+      querySnapshot.forEach((doc) => {
+        cupones.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log('✅ Cupones encontrados:', cupones.length);
+      return cupones; // ← Devolver ARRAY de cupones
+      
     } catch (error) {
-      console.error('Error al buscar cupon:', error);
+      console.error('❌ Error al buscar cupones:', error);
       throw error;
     }
   },

@@ -24,29 +24,30 @@ export const useCupones = () => {
     const [error, setError] = useState(null);
 
     // Función para traer los cupones desde Firebase
-    const fetchCupones = useCallback(async () => {
-        // ✅ Firebase Auth usa 'uid', no 'id'
-        if (!user?.uid) return;
+    // src/hooks/useCupones.js - Agregar al inicio de fetchCupones
 
-        setCargando(true);
-        setError(null);
+const fetchCupones = useCallback(async () => {
 
-        try {
-            // ✅ getCuponesByUser debe devolver un ARRAY, no un objeto único
-            const data = await cuponesService.getCuponesByUser(user.uid);
-            
-            // ✅ Validación de seguridad: asegurar que sea un array
-            const cuponesArray = Array.isArray(data) ? data : [];
-            
-            setCupones(cuponesArray);
-            categorizarCupones(cuponesArray);
-        } catch (err) {
-            setError(err.message || 'Error al cargar cupones');
-            console.error('Error en el fetch de cupones: ', err);
-        } finally {
-            setCargando(false);
-        }
-    }, [user]);
+    setCargando(true);
+    setError(null);
+
+    try {
+        const data = await cuponesService.getCuponesByUser(user.uid);
+        console.log('📦 Datos recibidos del servicio:', data);
+        console.log('📊 Tipo de datos:', Array.isArray(data) ? 'Array' : typeof data);
+        console.log('📊 Cantidad:', Array.isArray(data) ? data.length : 'No es array');
+        
+        const cuponesArray = Array.isArray(data) ? data : [];
+        
+        setCupones(cuponesArray);
+        categorizarCupones(cuponesArray);
+    } catch (err) {
+        console.error('❌ ERROR en fetchCupones:', err);
+        setError(err.message || 'Error al cargar cupones');
+    } finally {
+        setCargando(false);
+    }
+}, [user]);
 
     // ✅ Función para separar cupones por categoría
     const categorizarCupones = (cuponesList) => {
