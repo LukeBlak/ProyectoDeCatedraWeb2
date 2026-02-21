@@ -1,3 +1,4 @@
+// src/services/ofertasService.js
 import { db } from '../config/firebase';
 import { 
   collection, 
