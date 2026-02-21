@@ -11,61 +11,61 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { db } from '../config/firebase'
+
 export const cuponesService = {
 
   // Obtener todos los cupones de un usuario
   getCuponesByUser: async (usuarioId) => {
     try {
-      console.log('🔍 Buscando cupones para usuario:', usuarioId);
-      
-      const q = query(
+      const queryByCode = query(
         collection(db, 'cupones'),
         where('usuarioId', '==', usuarioId)
       );
 
-      const querySnapshot = await getDocs(q);
-      
-      // ✅ NO lanzar error si está vacío, devolver array vacío
+      const querySnapshot = await getDocs(queryByCode);
+
       if (querySnapshot.empty) {
-        console.log('📭 No se encontraron cupones para este usuario');
-        return []; // ← Devolver array vacío, no error
+        return []; // Es mejor retornar array vacío que lanzar error si no tiene cupones
       }
       
-      // ✅ Iterar TODOS los documentos, no solo el primero
-      const cupones = [];
-      querySnapshot.forEach((doc) => {
-        cupones.push({
+      // Mapeamos todos los documentos para convertir las fechas
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
           id: doc.id,
-          ...doc.data()
-        });
+          ...data,
+          // Convertimos los Timestamps a objetos Date de JS
+          fechaCompra: data.fechaCompra?.toDate(),
+          fechaCreacion: data.fechaCreacion?.toDate(), 
+          fechaLimiteUso: data.fechaLimiteUso?.toDate() 
+        };
       });
-      
-      console.log('✅ Cupones encontrados:', cupones.length);
-      return cupones; // ← Devolver ARRAY de cupones
-      
+
     } catch (error) {
-      console.error('❌ Error al buscar cupones:', error);
+      console.error('Error al buscar cupon:', error);
       throw error;
     }
   },
 
   // Obtener un cupón por su código
   getCuponByCodigo: async (codigo) => {
-    try{
+    try {
       const queryByCode = query(
         collection(db, 'cupones'),
         where('codigo', '==', codigo)
       );
 
-      const querySnapshot = await getDocs(queryByCode
-
-      );
+      const querySnapshot = await getDocs(queryByCode);
       const cupones = [];
       
       querySnapshot.forEach((doc) => {
+        const data = doc.data();
         cupones.push({
           id: doc.id,
-          ...doc.data()
+          ...data,
+          fechaCompra: data.fechaCompra?.toDate(),
+          fechaCreacion: data.fechaCreacion?.toDate(), // <--- CAMBIO AQUÍ
+          fechaLimiteUso: data.fechaLimiteUso?.toDate() // <--- CAMBIO AQUÍ
         });
       });
       
