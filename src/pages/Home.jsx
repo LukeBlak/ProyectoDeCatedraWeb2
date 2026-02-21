@@ -55,11 +55,11 @@ export const Home = () => {
   ];
 
   const rubros = [
-    { id: "todos", nombre: "Todos", icono: "/icons/all.svg" },
-    { id: "restaurantes", nombre: "Restaurantes", icono: "/icons/restaurant.svg" },
-    { id: "belleza", nombre: "Belleza & Spa", icono: "/icons/spa.svg" },
-    { id: "fitness", nombre: "Fitness", icono: "/icons/fitness.svg" },
-    { id: "entretenimiento", nombre: "Entretenimiento", icono: "/icons/entertainment.svg" },
+    { id: "todos", nombre: "Todos", icono: "/icons/world-humanitarian-day_3299012.png" },
+    { id: "restaurantes", nombre: "Restaurantes", icono: "/icons/restaurant_948036.png" },
+    { id: "belleza", nombre: "Belleza & Spa", icono: "/icons/beauty_4514888.png" },
+    { id: "fitness", nombre: "Fitness", icono: "/icons/fitness_2749777.png" },
+    { id: "entretenimiento", nombre: "Entretenimiento", icono: "/icons/music_14126345.png" },
   ];
 
   const ofertasFiltradas =
