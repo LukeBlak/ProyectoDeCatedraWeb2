@@ -43,14 +43,14 @@ export const Home = () => {
     },
     {
         id: 4,
-        titulo: " 25% OFF",
-        empresa: "Academia Digital",
-        precioRegular: 120,
-        precioOferta: 90,
+        titulo: "Entrada al Cine 25% OFF",
+        empresa: "CineMax",
+        precioRegular: 50,
+        precioOferta: 37.5,
         descuento: 25,
-        icono: "/icons/online-course.svg",
+        icono: "/icons/cinema.svg",
         rubro: "entretenimiento",
-        color: "from-purple-400 to-indigo-500",
+        color: "from-green-400 to-emerald-500",
     }
   ];
 
