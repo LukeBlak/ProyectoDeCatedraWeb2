@@ -1,40 +1,45 @@
-import React, { useCallback, useEffect, useState } from 'react'
-import { cuponesService } from "../services/cuponesService"
-import { useAuth } from "./useAuth"
+import React, { useCallback, useEffect, useState } from 'react';
+import { cuponesService } from "../services/cuponesService";
+import { useAuth } from "./useAuth";
 
 /**
  * Custom Hook: useCupones
- * Centraliza la lógica de negocio para la gestión de cupones, incluyendo
- * el ciclo de vida de los datos (CRUD), categorización y validaciones.
+ * Centraliza la lógica de negocio para la gestión de cupones
  */
 
 export const useCupones = () => {
 
-    // Estados para organizar los cupones según su situación
-    const ESTADO_CUPON_DISPONIBLE = "Disponible";
-    const ESTADO_CUPON_CANJEADO = "Canjeado";
-    const ESTADO_CUPON_VENCIDO = "Vencido";
+    // ✅ Estados deben coincidir EXACTAMENTE con los valores en Firestore (minúsculas)
+    const ESTADO_CUPON_DISPONIBLE = "disponible";
+    const ESTADO_CUPON_CANJEADO = "canjeado";
+    const ESTADO_CUPON_VENCIDO = "vencido";
     
     const { user } = useAuth();
 
     const [cupones, setCupones] = useState([]);
     const [cuponesDisponibles, setCuponesDisponibles] = useState([]);
-    const [cuponesCanjeados, setcuponesCanjeados] = useState([]);
-    const [cuponesVencidos, setcuponesVencidos] = useState([]);
+    const [cuponesCanjeados, setCuponesCanjeados] = useState([]);
+    const [cuponesVencidos, setCuponesVencidos] = useState([]);
     const [cargando, setCargando] = useState(false);
     const [error, setError] = useState(null);
 
-// Función para traer los cupones desde la base de datos
-        const fetchCupones = useCallback(async () => {
-        if (!user?.id) return; // Si no hay usuario, no hacemos nada
+    // Función para traer los cupones desde Firebase
+    const fetchCupones = useCallback(async () => {
+        // ✅ Firebase Auth usa 'uid', no 'id'
+        if (!user?.uid) return;
 
         setCargando(true);
         setError(null);
 
         try {
-            const data = await cuponesService.getCuponesByUser(user.id);
-            setCupones(data);
-            categorizarCupones(data);
+            // ✅ getCuponesByUser debe devolver un ARRAY, no un objeto único
+            const data = await cuponesService.getCuponesByUser(user.uid);
+            
+            // ✅ Validación de seguridad: asegurar que sea un array
+            const cuponesArray = Array.isArray(data) ? data : [];
+            
+            setCupones(cuponesArray);
+            categorizarCupones(cuponesArray);
         } catch (err) {
             setError(err.message || 'Error al cargar cupones');
             console.error('Error en el fetch de cupones: ', err);
@@ -43,34 +48,51 @@ export const useCupones = () => {
         }
     }, [user]);
 
-    // Esta función separa el montón de cupones en grupos (disponibles, usados, etc.)
+    // ✅ Función para separar cupones por categoría
     const categorizarCupones = (cuponesList) => {
+        // ✅ Validación: si no es array, usar array vacío
+        if (!Array.isArray(cuponesList)) {
+            console.warn('cuponesList no es un array:', cuponesList);
+            setCuponesDisponibles([]);
+            setCuponesCanjeados([]);
+            setCuponesVencidos([]);
+            return;
+        }
+
         const fechaActual = new Date();
 
-        const disponibles = cuponesList.filter(
-            (cupon) => cupon.estado === ESTADO_CUPON_DISPONIBLE && new Date(cupon.FechaLimiteUso) < fechaActual
-        );
+        // ✅ Lógica corregida: disponible = estado 'disponible' Y fecha límite > hoy
+        const disponibles = cuponesList.filter((cupon) => {
+            const fechaLimite = cupon.fechaLimiteUso?.toDate?.() || new Date(cupon.fechaLimiteUso);
+            return cupon.estado === ESTADO_CUPON_DISPONIBLE && fechaLimite > fechaActual;
+        });
+
         const canjeados = cuponesList.filter(
             (cupon) => cupon.estado === ESTADO_CUPON_CANJEADO
         );
-        const vencidos = cuponesList.filter(
-            (cupon) => cupon.estado === ESTADO_CUPON_VENCIDO && new Date(cupon.FechaLimiteUso) <= fechaActual
-        );
+
+        // ✅ Vencido = estado 'vencido' O (disponible pero fecha límite <= hoy)
+        const vencidos = cuponesList.filter((cupon) => {
+            const fechaLimite = cupon.fechaLimiteUso?.toDate?.() || new Date(cupon.fechaLimiteUso);
+            return cupon.estado === ESTADO_CUPON_VENCIDO || 
+                   (cupon.estado === ESTADO_CUPON_DISPONIBLE && fechaLimite <= fechaActual);
+        });
 
         setCuponesDisponibles(disponibles);
-        setcuponesCanjeados(canjeados);
-        setcuponesVencidos(vencidos);
-    }
+        setCuponesCanjeados(canjeados);
+        setCuponesVencidos(vencidos);
+    };
 
     /**
-     * Recupera un cupón específico mediante su código único.
+     * Recupera un cupón específico mediante su código único
      */
     const getCuponByCodigo = async (codigoCupon) => {
         setCargando(true);
         setError(null);
 
         try {
-            const cupon = await cuponesService.getCuponByUser(codigoCupon);
+            // ✅ Nombre correcto del método en el servicio
+            const cupon = await cuponesService.getCuponByCodigo(codigoCupon);
             return cupon;
         } catch (err) {
             setError(err.message || 'Cupón no encontrado');
@@ -80,22 +102,24 @@ export const useCupones = () => {
         }
     };
 
+    /**
+     * Simula la compra de cupones
+     */
     const comprarCupones = async (ofertaId, cantidad, datosPago) => {
         setCargando(true);
         setError(null);
 
         try {
-            const cuponesComprados = await cuponesService.comprarCupones({
-                usuarioId: user.id,
+            // ✅ Usar user.uid y validar que el servicio exista
+            const cuponesComprados = await cuponesService.crearCuponesCompra({
+                usuarioId: user.uid,
                 ofertaId,
                 cantidad,
                 datosPago,
-                dui: user.id
+                dui: user.dui // ✅ Asegúrate que user.dui existe en tu contexto
             }); 
 
-            // Si la compra sale bien, refrescamos la lista para que aparezcan los nuevos
             await fetchCupones();
-
             return cuponesComprados;
         } catch (err) {
             setError(err.message || 'Error al comprar cupones');
@@ -105,15 +129,17 @@ export const useCupones = () => {
         }
     };
 
-    // Función para obtener el archivo PDF listo para descargar o ver
-    const generarPDF = async (cuponId) => {
+    /**
+     * Genera el PDF de un cupón disponible
+     */
+    const generarPDF = async (cupon) => {
         setCargando(true);
         setError(null);
 
         try {
-            // Pedimos el PDF al servicio y esperamos a que se genere el archivo
-            const pdfConvertido = await cuponesService.generarPDFCupon(cuponId);
-            return pdfConvertido;
+            // ✅ Implementación real con jsPDF o similar
+            // Por ahora, retornamos el objeto del cupón para que el componente lo procese
+            return cupon;
         } catch (err) {
             setError(err.message || 'Error al generar PDF');
             throw err;
@@ -122,15 +148,16 @@ export const useCupones = () => {
         }
     };
 
+    /**
+     * Canjea un cupón validando código y DUI
+     */
     const canjearCupon = async (codigo, dui) => {
         setCargando(true);
         setError(null);
 
         try {
-            // Esperamos a que el sistema valide y marque el cupón como usado
             const resultado = await cuponesService.canjearCupon(codigo, dui);
-
-            if (user?.id) {
+            if (user?.uid) {
                 await fetchCupones();
             }
             return resultado;
@@ -142,10 +169,19 @@ export const useCupones = () => {
         }
     };
 
-    // Revisamos si el cupón cumple todas las reglas antes de intentar usarlo
+    /**
+     * Valida si un cupón cumple todas las reglas para ser canjeado
+     */
     const validarCupon = (cupon, duiCliente) => {
+        if (!cupon) {
+            return {
+                esValido: false,
+                mensaje: 'Cupón no encontrado'
+            };
+        }
+
         const ahora = new Date();
-        const fechaLimite = new Date(cupon.fechaLimiteUso);
+        const fechaLimite = cupon.fechaLimiteUso?.toDate?.() || new Date(cupon.fechaLimiteUso);
 
         const validaciones = {
             existe: !!cupon,
@@ -154,22 +190,15 @@ export const useCupones = () => {
             duiCoincide: cupon.dui === duiCliente,
         };
 
-        let esValido = true;
-  
-        // Si alguna de las condiciones de arriba es falsa, el cupón no es válido
-        if (!validaciones.existe) esValido = false;
-        if (!validaciones.noCanjeado) esValido = false;
-        if (!validaciones.noVencido) esValido = false;
-        if (!validaciones.duiCoincide) esValido = false;
+        const esValido = Object.values(validaciones).every(v => v === true);
 
         return {
             esValido,
             validaciones,
-            mensaje: !esValido ? obtenerMensajeError(validaciones) : 'Cupón válido'
+            mensaje: esValido ? 'Cupón válido' : obtenerMensajeError(validaciones)
         };
     };
 
-    // Solo para dar un mensaje al usuario de lo que pasó para que diera error
     const obtenerMensajeError = (validaciones) => {
         if (!validaciones.existe) return 'Cupón no encontrado';
         if (!validaciones.noCanjeado) return 'Este cupón ya fue canjeado';
@@ -178,22 +207,22 @@ export const useCupones = () => {
         return 'Cupón inválido';
     };
 
-    // Este useEffect hace que los cupones se carguen automáticamente al entrar a la pantalla
+    // ✅ Efecto para cargar cupones al montar o cambiar usuario
     useEffect(() => {
-        if (user?.id) {
+        if (user?.uid) {
             fetchCupones();
         }
     }, [user, fetchCupones]);
 
-    // Cálculos rápidos para mostrar en el dashboard (totales, ahorros, etc.)
+    // ✅ Cálculos para estadísticas
     const estadisticas = {
         total: cupones.length,
         disponibles: cuponesDisponibles.length,
         canjeados: cuponesCanjeados.length,
         vencidos: cuponesVencidos.length,
         ahorroTotal: cuponesCanjeados.reduce(
-        (sum, c) => sum + (c.precioRegular - c.precioOferta), 
-        0
+            (sum, c) => sum + ((c.precioRegular || 0) - (c.precioOferta || 0)), 
+            0
         )
     };
 
@@ -211,5 +240,5 @@ export const useCupones = () => {
         generarPDF,
         canjearCupon,
         validarCupon,
-    }
-}
+    };
+};

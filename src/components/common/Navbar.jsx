@@ -80,21 +80,21 @@ export const Navbar = () => {
                     to="/mi-perfil"
                     className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-sky-50 rounded-t-xl"
                   >
-                    <img src="/icons/user.svg" alt="" className="w-4 h-4" />
+                    <img src="/icons/user_8370811.png" alt="" className="w-4 h-4" />
                     Mi Perfil
                   </Link>
                   <Link
                     to="/mis-cupones"
                     className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-sky-50"
                   >
-                    <img src="/icons/ticket.svg" alt="" className="w-4 h-4" />
+                    <img src="/icons/cupon.png" alt="" className="w-4 h-4" />
                     Mis Cupones
                   </Link>
                   <button
                     onClick={handleLogout}
                     className="w-full flex items-center gap-2 px-4 py-3 text-red-600 hover:bg-red-50 rounded-b-xl"
                   >
-                    <img src="/icons/logout.svg" alt="" className="w-4 h-4" />
+                    <img src="/icons/turn-off_2550435.png" alt="" className="w-4 h-4" />
                     Cerrar Sesión
                   </button>
                 </div>
