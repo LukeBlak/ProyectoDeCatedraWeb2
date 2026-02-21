@@ -1,5 +1,3 @@
-// src/pages/MiPerfil.jsx
-
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { authService } from '../services/authService';
@@ -9,55 +7,67 @@ import {Footer} from '../components/common/Footer';
 import {Button} from '../components/common/Button';
 
 export const MiPerfil = () => {
-  const { user, actualizarUsuario } = useAuth();
+  //Obtener usuario autenticado y funcion para actualizarlo desde el contexto
+  const { user, actualizarUsuario, logout } = useAuth();
   
+  // controla si el formulario del perfil esta en modo edición
   const [editando, setEditando] = useState(false);
+
+  //controla si se muestra el formulario para cambiar contraseña
   const [cambiandoPassword, setCambiandoPassword] = useState(false);
   
+
+  //Datos del formulario de perfil
   const [formData, setFormData] = useState({
-    nombres: user?.nombres || "",
-    apellidos: user?.apellidos || "",
-    telefono: user?.telefono || "",
-    direccion: user?.direccion || "",
+    nombres: user?.nombres || '',
+    apellidos: user?.apellidos || '',
+    telefono: user?.telefono || '',
+    direccion: user?.direccion || ''
   });
 
+
+  //Datos del formulario de cambio de contraseña
   const [passwordData, setPasswordData] = useState({
-    passwordActual: "", // carga la pswd actual
-    nuevaPassword: "", // la que se quiere poner
-    confirmarPassword: "", // la contraseña nueva de nuevo para comparar y verificar el cambio
+    passwordActual: '',
+    nuevaPassword: '',
+    confirmarPassword: ''
   });
 
-  const [loading, setLoading] = useState(false); // estado de cargando
-  const [mensaje, setMensaje] = useState({ tipo: "", texto: "" });
 
-  // Esta función se ejecuta cada vez que el usuario escribe en los campos del perfil
+  //Loading de los botones
+  const [loading, setLoading] = useState(false);
+
+  //Mensajes de error
+  const [mensaje, setMensaje] = useState({ tipo: '', texto: '' });
+
+
+  //Maneja cambios en el formulario de perfil
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Se ejecuta cada vez que se escribe en campo de contraseña
+
+  //cambios en el formulario de contraseña
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
-    setPasswordData((prev) => ({ ...prev, [name]: value }));
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
-  // es la que se ejecuta al cambiar y actualizar perfeil
   const handleActualizarPerfil = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); //evita que el formulario recargue la pagina
     setLoading(true);
-    setMensaje({ tipo: "", texto: "" });
+    setMensaje({ tipo: '', texto: '' });
 
     try {
+      //Actualiza datos en firestore
       await authService.actualizarPerfil(user.id, formData);
+      //Actualiza datos en el contexto global
       actualizarUsuario(formData);
-      setMensaje({
-        tipo: "success",
-        texto: "✅ Perfil actualizado exitosamente",
-      });
+      setMensaje({ tipo: 'success', texto: '✅ Perfil actualizado exitosamente' });
       setEditando(false);
     } catch (error) {
-      setMensaje({ tipo: "error", texto: error.message });
+      setMensaje({ tipo: 'error', texto: error.message });
     } finally {
       setLoading(false);
     }
@@ -66,42 +76,39 @@ export const MiPerfil = () => {
   const handleCambiarPassword = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setMensaje({ tipo: "", texto: "" });
+    setMensaje({ tipo: '', texto: '' });
 
+
+    //Valida que las contraseñas coincidan
     if (passwordData.nuevaPassword !== passwordData.confirmarPassword) {
-      setMensaje({ tipo: "error", texto: "Las contraseñas no coinciden" });
+      setMensaje({ tipo: 'error', texto: 'Las contraseñas no coinciden' });
       setLoading(false);
       return;
     }
 
     try {
+      //Llama el servicio de cambiar contraseña
       await authService.cambiarPassword(
         user.id,
         passwordData.passwordActual,
-        passwordData.nuevaPassword,
+        passwordData.nuevaPassword
       );
-      setMensaje({
-        tipo: "success",
-        texto: "✅ Contraseña cambiada exitosamente",
-      });
-      setPasswordData({
-        passwordActual: "",
-        nuevaPassword: "",
-        confirmarPassword: "",
-      });
+      setMensaje({ tipo: 'success', texto: '✅ Contraseña cambiada exitosamente' });
+
+      //limpiar el formulario
+      setPasswordData({ passwordActual: '', nuevaPassword: '', confirmarPassword: '' });
       setCambiandoPassword(false);
     } catch (error) {
-      setMensaje({ tipo: "error", texto: error.message });
+      setMensaje({ tipo: 'error', texto: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-  await logout();  
+  await logout();  //elimina al usuario de context y localStorage
   navigate("/"); 
   };
 
@@ -109,9 +116,10 @@ export const MiPerfil = () => {
   return (
     <>
       <Header />
-
+      {/* Contenedor principal */}
       <div className="min-h-screen bg-linear-to-br from-purple-50 via-pink-50 to-blue-50 py-12">
         <div className="container mx-auto px-4 max-w-4xl">
+          
           {/* Header */}
           <div className="text-center mb-8">
             <div className="text-6xl mb-4">👤</div>
@@ -119,14 +127,13 @@ export const MiPerfil = () => {
             <p className="text-gray-600">Administra tu información personal</p>
           </div>
 
-          {/* Mensajes */}
+          {/* Mensajes de exito o error*/}
           {mensaje.texto && (
-            <div
-              className={`mb-6 px-4 py-3 rounded-lg ${mensaje.tipo === "success"
-                  ? "bg-green-50 border border-green-200 text-green-700"
-                  : "bg-red-50 border border-red-200 text-red-700"
-                }`}
-            >
+            <div className={`mb-6 px-4 py-3 rounded-lg ${
+              mensaje.tipo === 'success' 
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-red-50 border border-red-200 text-red-700'
+            }`}>
               {mensaje.texto}
             </div>
           )}
@@ -138,7 +145,10 @@ export const MiPerfil = () => {
                 Información Personal
               </h2>
               {!editando && (
-                <Button variant="outline" onClick={() => setEditando(true)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditando(true)}
+                >
                   ✏️ Editar
                 </Button>
               )}
@@ -181,9 +191,7 @@ export const MiPerfil = () => {
                   <label className="block text-sm font-semibold text-gray-500 mb-1">
                     Dirección
                   </label>
-                  <p className="text-lg text-gray-800">
-                    {user?.direccion || "No especificada"}
-                  </p>
+                  <p className="text-lg text-gray-800">{user?.direccion || 'No especificada'}</p>
                 </div>
               </div>
             ) : (
@@ -241,8 +249,11 @@ export const MiPerfil = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Guardando..." : "Guardar Cambios"}
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? 'Guardando...' : 'Guardar Cambios'}
                   </Button>
                   <Button
                     type="button"
@@ -250,10 +261,10 @@ export const MiPerfil = () => {
                     onClick={() => {
                       setEditando(false);
                       setFormData({
-                        nombres: user?.nombres || "",
-                        apellidos: user?.apellidos || "",
-                        telefono: user?.telefono || "",
-                        direccion: user?.direccion || "",
+                        nombres: user?.nombres || '',
+                        apellidos: user?.apellidos || '',
+                        telefono: user?.telefono || '',
+                        direccion: user?.direccion || ''
                       });
                     }}
                   >
@@ -267,7 +278,9 @@ export const MiPerfil = () => {
           {/* Cambiar Contraseña */}
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">Seguridad</h2>
+              <h2 className="text-2xl font-bold text-gray-800">
+                Seguridad
+              </h2>
               {!cambiandoPassword && (
                 <Button
                   variant="outline"
@@ -320,19 +333,18 @@ export const MiPerfil = () => {
                 </div>
 
                 <div className="flex gap-3">
-                  <Button type="submit" disabled={loading}>
-                    {loading ? "Cambiando..." : "Cambiar Contraseña"}
+                  <Button
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? 'Cambiando...' : 'Cambiar Contraseña'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
                       setCambiandoPassword(false);
-                      setPasswordData({
-                        passwordActual: "",
-                        nuevaPassword: "",
-                        confirmarPassword: "",
-                      });
+                      setPasswordData({ passwordActual: '', nuevaPassword: '', confirmarPassword: '' });
                     }}
                   >
                     Cancelar

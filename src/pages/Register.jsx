@@ -1,5 +1,3 @@
-// src/pages/Register.jsx
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -7,9 +5,11 @@ import {AuthLayout} from '../layouts/AuthLayout';
 import Button from '../components/common/Button';
 
 export const Register = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
+  const navigate = useNavigate(); //hook de navegacion
+  const { register } = useAuth(); //obtener funcion register del contexto global
   
+
+  //estado que almacena datos del formulario
   const [formData, setFormData] = useState({
     nombres: '',
     apellidos: '',
@@ -21,13 +21,22 @@ export const Register = () => {
     dui: ''
   });
 
+  //almacena errores de validacion en los campos
   const [errores, setErrores] = useState({});
+
+  // muestra loading en el boton
   const [loading, setLoading] = useState(false);
+
+  // mostrar error general 
   const [error, setError] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    //actualiza el valor del formulario
     setFormData(prev => ({ ...prev, [name]: value }));
+
+    //si hay errores en el campo lo limpia al escribir
     if (errores[name]) {
       setErrores(prev => ({ ...prev, [name]: '' }));
     }
@@ -36,6 +45,7 @@ export const Register = () => {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
+    //validaciones basicas
     if (!formData.nombres.trim()) nuevosErrores.nombres = 'El nombre es requerido';
     if (!formData.apellidos.trim()) nuevosErrores.apellidos = 'El apellido es requerido';
     if (!formData.email.trim()) nuevosErrores.email = 'El correo es requerido';
@@ -47,23 +57,30 @@ export const Register = () => {
     if (!formData.telefono.trim()) nuevosErrores.telefono = 'El teléfono es requerido';
     if (!formData.dui.trim()) nuevosErrores.dui = 'El DUI es requerido';
 
+    //guarda los errores
     setErrores(nuevosErrores);
+
+    //retorna true si no hay errores
     return Object.keys(nuevosErrores).length === 0;
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); //evita recargar el navegador
     setError('');
 
+    //valida antes de enviar
     if (!validarFormulario()) return;
 
     setLoading(true);
 
     try {
+      //llama al metodo register del contexto
       await register(formData);
       alert('¡Registro exitoso!');
+      //redirige al home despues del registro
       navigate('/');
     } catch (error) {
+      //muestra error general si falla el registro
       setError(error.message);
     } finally {
       setLoading(false);
@@ -72,6 +89,7 @@ export const Register = () => {
 
   return (
     <AuthLayout>
+      {/* Contenedor principal */}
       <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl">
         
         {/* Header */}
@@ -92,7 +110,7 @@ export const Register = () => {
           </div>
         )}
 
-        {/* Formulario */}
+        {/* Formulario de registro */}
         <form onSubmit={handleSubmit} className="space-y-4">
           
           {/* Nombres y Apellidos */}
