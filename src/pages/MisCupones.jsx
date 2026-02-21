@@ -86,7 +86,7 @@ export const MisCupones = () => {
         if (cupones.length === 0) {
             return (
                 <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🎫</div>
+                    <img src="/icons/cupon.png" className="mx-auto mb-4 w-16 h-16" />
                     <p className="text-gray-500 text-lg">{mensaje}</p>
                     {vistaActiva === 'disponibles' && (
                         <button
