@@ -48,7 +48,7 @@ export const Navbar = () => {
 
         {/* Menú Desktop */}
         <div className="hidden md:flex items-center gap-5">
-          <Link to="/" className="text-white hover:text-sky-200 font-medium">
+          <Link to="/ofertas" className="text-white hover:text-sky-200 font-medium">
             Ofertas
           </Link>
 
@@ -141,7 +141,7 @@ export const Navbar = () => {
           />
 
           <div className="flex flex-col gap-3">
-            <Link to="/" className="nav-mobile" onClick={() => setMenuAbierto(false)}>
+            <Link to="/ofertas" className="nav-mobile" onClick={() => setMenuAbierto(false)}>
               Ofertas
             </Link>
 

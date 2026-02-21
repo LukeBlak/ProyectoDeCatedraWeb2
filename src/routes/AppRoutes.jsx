@@ -8,6 +8,7 @@ import {Register} from '../pages/Register';
 import { MisCupones } from '../pages/MisCupones';
 import {MiPerfil} from '../pages/MiPerfil';
 import {ProtectedRoute} from './ProtectedRoute';
+import { Ofertas } from "../pages/Ofertas";
 
 export const AppRoutes = () => {
   return (
@@ -16,6 +17,7 @@ export const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/ofertas" element={<Ofertas />} />
 
       {/* Rutas Protegidas */}
       <Route 
