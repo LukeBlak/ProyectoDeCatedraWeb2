@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Header } from "../components/common/Header";
 import { Footer } from "../components/common/Footer";
 import { Button } from "../components/common/Button";
+import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
 
@@ -66,6 +67,8 @@ export const Home = () => {
         { id: "entretenimiento", nombre: "Entretenimiento", icono: "/icons/music_14126345.png" },
     ];
 
+    const navigate = useNavigate();
+
     // esel que se encanta de mostrar el rubro, es el filtro de las categorias que existen
     const ofertasFiltradas =
         rubroSeleccionado === "todos"
@@ -86,8 +89,7 @@ export const Home = () => {
                     <p className="text-xl text-sky-100 mb-8">
                         Descubre descuentos exclusivos en restaurantes, spas y más
                     </p>
-                    {/* Aún no hace nada pero es el que mostrará todas las ofertas */}
-                    <Button size="lg">Ver ofertas</Button>
+                    <Button size="lg" onClick={()=>navigate('/ofertas')}>Ver ofertas</Button>
                 </div>
             </section>
 
