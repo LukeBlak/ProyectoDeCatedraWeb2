@@ -73,6 +73,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(userActualizado));
   };
 
+  // Helpers de roles
+  const isAdmin = user?.rol === 'admin';
+  const isEmpleado = user?.rol === 'empleado';
+  const isCliente = user?.rol === 'cliente';
+
   const value = {
     user,
     loading,
@@ -80,7 +85,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     actualizarUsuario,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isAdmin,
+    isEmpleado,
+    isCliente
   };
 
   if (loading) {

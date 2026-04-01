@@ -4,8 +4,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-export const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+  const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
     return (
@@ -20,6 +20,11 @@ export const ProtectedRoute = ({ children }) => {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Si se especifican roles permitidos y el usuario no tiene uno de ellos
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user?.rol)) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
