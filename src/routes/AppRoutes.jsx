@@ -10,6 +10,9 @@ import {MiPerfil} from '../pages/MiPerfil';
 import {ProtectedRoute} from './ProtectedRoute';
 import { Ofertas } from "../pages/Ofertas";
 import { AdminPanel } from "../pages/AdminPanel";
+import { AdminEmpresasClientes } from '../pages/AdminEmpresasClientes';
+import { EmpresaOfertasAdmin } from '../pages/EmpresaOfertasAdmin';
+import { DetalleOferta } from '../pages/DetalleOferta';
 
 export const AppRoutes = () => {
   return (
@@ -19,6 +22,7 @@ export const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/ofertas" element={<Ofertas />} />
+      <Route path="/detalle-oferta/:id" element={<DetalleOferta />} />
 
       {/* Rutas Protegidas - Usuario Autenticado */}
       <Route 
@@ -46,6 +50,22 @@ export const AppRoutes = () => {
             <AdminPanel />
           </ProtectedRoute>
         } 
+      />
+      <Route
+        path="/admin/empresas-clientes"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminEmpresasClientes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/empresa/ofertas"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'empleado', 'admin_empresa']}>
+            <EmpresaOfertasAdmin />
+          </ProtectedRoute>
+        }
       />
 
       {/* 404 */}

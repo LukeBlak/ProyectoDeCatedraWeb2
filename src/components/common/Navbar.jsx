@@ -8,6 +8,8 @@ export const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const puedeGestionarOfertasEmpresa =
+    user?.rol === 'admin' || user?.rol === 'empleado' || user?.rol === 'admin_empresa';
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -63,6 +65,14 @@ export const Navbar = () => {
                 >
                   Mis Cupones
                 </Link>
+                {puedeGestionarOfertasEmpresa && (
+                  <Link
+                    to="/empresa/ofertas"
+                    className="text-white hover:text-sky-200 font-medium whitespace-nowrap"
+                  >
+                    Mis Ofertas
+                  </Link>
+                )}
 
                 {/* Usuario Dropdown */}
                 <div className="relative">
@@ -107,6 +117,16 @@ export const Navbar = () => {
                           <img src="/icons/cupon.png" alt="" className="w-5 h-5" />
                           <span>Mis Cupones</span>
                         </Link>
+                        {puedeGestionarOfertasEmpresa && (
+                          <Link
+                            to="/empresa/ofertas"
+                            onClick={() => setDropdownAbierto(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition"
+                          >
+                            <span className="text-lg">📣</span>
+                            <span>Mis Ofertas</span>
+                          </Link>
+                        )}
                         {isAdmin && (
                           <Link
                             to="/admin"
@@ -268,6 +288,17 @@ export const Navbar = () => {
                   <img src="/icons/user_8370811.png" alt="" className="w-5 h-5" />
                   Mi Perfil
                 </Link>
+
+                {puedeGestionarOfertasEmpresa && (
+                  <Link
+                    to="/empresa/ofertas"
+                    onClick={() => setMenuAbierto(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 rounded-lg transition font-medium"
+                  >
+                    <span className="text-lg">📣</span>
+                    Mis Ofertas
+                  </Link>
+                )}
 
                 {isAdmin && (
                   <Link

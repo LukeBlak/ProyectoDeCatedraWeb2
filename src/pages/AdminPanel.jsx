@@ -11,13 +11,13 @@ export const AdminPanel = () => {
   const sections = [
     {
       id: 'empresas',
-      title: 'Gestionar Empresas',
-      description: 'Registra, edita y elimina empresas',
+      title: 'Empresas y Clientes',
+      description: 'Consulta detalle operativo de empresas y clientes',
       icon: '🏢',
       color: 'from-blue-500 to-blue-600',
       links: [
-        { label: 'Ver Empresas', href: '/admin/empresas' },
-        { label: 'Crear Empresa', href: '/admin/empresas/nueva' }
+        { label: 'Detalle de Empresas y Clientes', href: '/admin/empresas-clientes' },
+        { label: 'Gestión de Ofertas de Empresa', href: '/empresa/ofertas' }
       ]
     },
     {
