@@ -9,6 +9,7 @@ import { MisCupones } from '../pages/MisCupones';
 import {MiPerfil} from '../pages/MiPerfil';
 import {ProtectedRoute} from './ProtectedRoute';
 import { Ofertas } from "../pages/Ofertas";
+import { AdminPanel } from "../pages/AdminPanel";
 
 export const AppRoutes = () => {
   return (
@@ -19,7 +20,7 @@ export const AppRoutes = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/ofertas" element={<Ofertas />} />
 
-      {/* Rutas Protegidas */}
+      {/* Rutas Protegidas - Usuario Autenticado */}
       <Route 
         path="/mis-cupones" 
         element={
@@ -33,6 +34,16 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MiPerfil />
+          </ProtectedRoute>
+        } 
+      />
+
+      {/* Rutas Protegidas - Solo Admin */}
+      <Route 
+        path="/admin" 
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminPanel />
           </ProtectedRoute>
         } 
       />

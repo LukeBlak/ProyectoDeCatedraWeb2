@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 export const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -107,12 +107,22 @@ export const Navbar = () => {
                           <img src="/icons/cupon.png" alt="" className="w-5 h-5" />
                           <span>Mis Cupones</span>
                         </Link>
+                        {isAdmin && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setDropdownAbierto(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-sky-700 hover:bg-sky-50 transition border-t border-gray-200"
+                          >
+                            <span className="text-lg">⚙️</span>
+                            <span>Panel Admin</span>
+                          </Link>
+                        )}
                         <button
                           onClick={() => {
                             handleLogout();
                             setDropdownAbierto(false);
                           }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-b-xl transition"
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 transition ${isAdmin ? 'rounded-b-xl' : 'rounded-b-xl'}`}
                         >
                           <img src="/icons/turn-off_2550435.png" alt="" className="w-5 h-5" />
                           <span>Cerrar Sesión</span>
@@ -258,6 +268,17 @@ export const Navbar = () => {
                   <img src="/icons/user_8370811.png" alt="" className="w-5 h-5" />
                   Mi Perfil
                 </Link>
+
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMenuAbierto(false)}
+                    className="flex items-center gap-3 px-4 py-3 text-sky-700 hover:bg-sky-50 rounded-lg transition font-medium bg-sky-50 border border-sky-200"
+                  >
+                    <span className="text-lg">⚙️</span>
+                    Panel de Administración
+                  </Link>
+                )}
 
                 <div className="border-t border-gray-200 my-4"></div>
 

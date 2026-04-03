@@ -90,7 +90,7 @@ export const authService = {
         dui: userData.dui.trim(),
         fechaRegistro: serverTimestamp(),
         ultimoAcceso: serverTimestamp(),
-        rol: 'cliente',
+        rol: userData.rol || 'cliente', // Permitir especificar rol, default 'cliente'
         activo: true
       };
 
