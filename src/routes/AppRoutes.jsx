@@ -13,6 +13,8 @@ import { AdminPanel } from "../pages/AdminPanel";
 import { AdminEmpresasClientes } from '../pages/AdminEmpresasClientes';
 import { EmpresaOfertasAdmin } from '../pages/EmpresaOfertasAdmin';
 import { DetalleOferta } from '../pages/DetalleOferta';
+import { VerEmpleados } from '../pages/VerEmpleados';
+import { AgregarEmpleado } from '../pages/AgregarEmpleado';
 
 export const AppRoutes = () => {
   return (
@@ -64,6 +66,22 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['admin', 'empleado', 'admin_empresa']}>
             <EmpresaOfertasAdmin />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/empleados"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <VerEmpleados />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/empleados/nuevo"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AgregarEmpleado />
           </ProtectedRoute>
         }
       />
