@@ -1,12 +1,19 @@
 // src/pages/AdminPanel.jsx
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 export const AdminPanel = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [expandedSection, setExpandedSection] = useState(null);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const sections = [
     {
@@ -60,13 +67,84 @@ export const AdminPanel = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-sky-600 via-emerald-500 to-sky-600 text-white py-8 shadow-lg">
         <div className="container mx-auto px-4">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-4xl">⚙️</span>
-            <h1 className="text-4xl font-bold">Panel de Administración</h1>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-4">
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">⚙️</span>
+              <div>
+                <h1 className="text-4xl font-bold">Panel de Administración</h1>
+                <p className="text-sky-100 mt-1">Gestiona empresas, empleados, rubros y ofertas</p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full transition"
+              >
+                <div className="w-10 h-10 bg-gradient-to-br from-sky-400 to-emerald-400 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                  {user?.nombres?.charAt(0)}{user?.apellidos?.charAt(0)}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold">{user?.nombres} {user?.apellidos}</p>
+                  <p className="text-xs text-sky-100/80">{user?.rol?.toUpperCase()}</p>
+                </div>
+                <svg
+                  className={`w-4 h-4 text-white transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {profileDropdownOpen && (
+                <>
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl z-50 overflow-hidden">
+                    <Link
+                      to="/mi-perfil"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition"
+                    >
+                      <span>Mi Perfil</span>
+                    </Link>
+                    <Link
+                      to="/mis-cupones"
+                      onClick={() => setProfileDropdownOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 transition"
+                    >
+                      <span>Mis Cupones</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 transition"
+                    >
+                      Cerrar Sesión
+                    </button>
+                  </div>
+                  <div className="fixed inset-0 z-40" onClick={() => setProfileDropdownOpen(false)} />
+                </>
+              )}
+            </div>
           </div>
-          <p className="text-sky-100 ml-14">Gestiona empresas, empleados, rubros y ofertas</p>
-          <p className="text-sky-100 ml-14 text-sm mt-2">Bienvenido, <strong>{user?.nombres}</strong></p>
+
+          <p className="text-sky-100 text-sm">Bienvenido, <strong>{user?.nombres}</strong></p>
         </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 bg-white text-sky-700 px-5 py-3 rounded-full shadow-md hover:shadow-xl transition"
+        >
+          <span className="text-lg">←</span>
+          Volver al Home
+        </Link>
       </div>
 
       {/* Content */}
