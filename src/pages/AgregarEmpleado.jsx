@@ -76,51 +76,58 @@ export const AgregarEmpleado = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 py-8">
-      <div className="max-w-xl mx-auto bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100">
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
-          <div className="flex items-center gap-3 mb-2">
-            <span className="text-3xl">👥</span>
-            <h2 className="text-2xl font-bold">Agregar Empleado</h2>
-          </div>
-          <p className="text-white/80">Completa el formulario para registrar un nuevo empleado</p>
+      <div className="max-w-xl mx-auto">
+        <div className="mb-4">
+          <a href="/admin" className="inline-flex items-center gap-2 bg-white text-purple-700 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition">
+            <span className="text-lg">←</span> Volver al Panel de Administración
+          </a>
         </div>
-        <form className="p-6 space-y-4" onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Nombres</label>
-              <input name="nombres" value={form.nombres} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100">
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-3xl">👥</span>
+              <h2 className="text-2xl font-bold">Agregar Empleado</h2>
             </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Apellidos</label>
-              <input name="apellidos" value={form.apellidos} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Correo electrónico</label>
-              <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Contraseña</label>
-              <input name="password" type="password" value={form.password} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Teléfono</label>
-              <input name="telefono" value={form.telefono} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">Dirección</label>
-              <input name="direccion" value={form.direccion} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
-            <div>
-              <label className="block text-gray-700 font-medium mb-1">DUI</label>
-              <input name="dui" value={form.dui} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
-            </div>
+            <p className="text-white/80">Completa el formulario para registrar un nuevo empleado</p>
           </div>
-          {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
-          {success && <div className="text-green-600 text-sm font-medium">{success}</div>}
-          <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:shadow-xl transition">
-            {loading ? 'Registrando...' : 'Registrar Empleado'}
-          </button>
-        </form>
+          <form className="p-6 space-y-4" onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Nombres</label>
+                <input name="nombres" value={form.nombres} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Apellidos</label>
+                <input name="apellidos" value={form.apellidos} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Correo electrónico</label>
+                <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Contraseña</label>
+                <input name="password" type="password" value={form.password} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Teléfono</label>
+                <input name="telefono" value={form.telefono} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">Dirección</label>
+                <input name="direccion" value={form.direccion} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-1">DUI</label>
+                <input name="dui" value={form.dui} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+              </div>
+            </div>
+            {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
+            {success && <div className="text-green-600 text-sm font-medium">{success}</div>}
+            <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:shadow-xl transition">
+              {loading ? 'Registrando...' : 'Registrar Empleado'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
