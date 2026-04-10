@@ -3,11 +3,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { useCart } from '../../hooks/useCart';
 
 export const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const { carrito } = useCart();
+  
+  const carritoItemsCount = carrito?.reduce((total, item) => total + item.cantidad, 0) || 0;
+
   const puedeGestionarOfertasEmpresa =
     user?.rol === 'admin' || user?.rol === 'empleado' || user?.rol === 'admin_empresa';
   const navigate = useNavigate();
@@ -55,6 +60,16 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-4 flex-shrink-0">
             <Link to="/ofertas" className="text-white hover:text-sky-200 font-medium whitespace-nowrap">
               Ofertas
+            </Link>
+
+            {/* Ícono del Carrito Desktop */}
+            <Link to="/carrito" className="relative text-white hover:text-sky-200 p-2 transition">
+              <span className="text-2xl">🛒</span>
+              {carritoItemsCount > 0 && (
+                <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                  {carritoItemsCount}
+                </span>
+              )}
             </Link>
 
             {isAuthenticated ? (
@@ -267,6 +282,21 @@ export const Navbar = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
               Ofertas
+            </Link>
+
+            {/* Ícono del Carrito Móvil */}
+            <Link
+              to="/carrito"
+              onClick={() => setMenuAbierto(false)}
+              className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 rounded-lg transition font-medium"
+            >
+              <span className="text-xl">🛒</span>
+              <span>Mi Carrito</span>
+              {carritoItemsCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                  {carritoItemsCount}
+                </span>
+              )}
             </Link>
 
             {isAuthenticated ? (
