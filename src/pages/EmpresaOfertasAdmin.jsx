@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
 import { useAuth } from '../hooks/useAuth';
@@ -8,6 +9,9 @@ import {
   eliminarOfertaEmpresa,
   getOfertasEmpresaAdmin,
 } from '../services/ofertasService';
+import { empresasService } from '../services/empresasService';
+import { RUBROS } from '../utils/rubros';
+import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
 
 const INITIAL_FORM = {
   titulo: '',
@@ -18,11 +22,13 @@ const INITIAL_FORM = {
   fechaExpiracion: '',
   imagen: '',
   disponible: true,
+  empresaId: '',
 };
 
 export const EmpresaOfertasAdmin = () => {
   const { user } = useAuth();
   const [ofertas, setOfertas] = useState([]);
+  const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -30,8 +36,18 @@ export const EmpresaOfertasAdmin = () => {
   const [form, setForm] = useState(INITIAL_FORM);
 
   const isEditing = useMemo(() => Boolean(editingId), [editingId]);
+  const isAdmin = user?.rol === 'admin';
 
-  const loadOfertas = async () => {
+  const loadEmpresas = useCallback(async () => {
+    try {
+      const data = await empresasService.getEmpresasActivas();
+      setEmpresas(data);
+    } catch (err) {
+      console.error('Error al cargar empresas:', err);
+    }
+  }, []);
+
+  const loadOfertas = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -42,14 +58,57 @@ export const EmpresaOfertasAdmin = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
-    loadOfertas();
-  }, []);
+    if (user) {
+      loadEmpresas();
+      loadOfertas();
+    }
+  }, [user, loadEmpresas, loadOfertas]);
+
+  const validateForm = () => {
+    const titulo = String(form.titulo || '').trim();
+    const descripcion = String(form.descripcion || '').trim();
+    const rubro = String(form.rubro || '').trim();
+    const original = Number(form.precioOriginal);
+    const descuento = Number(form.precioDescuento);
+
+    if (titulo.length < 3) {
+      throw new Error('El titulo debe tener al menos 3 caracteres.');
+    }
+
+    if (descripcion.length < 10) {
+      throw new Error('La descripcion debe tener al menos 10 caracteres.');
+    }
+
+    if (!rubro) {
+      throw new Error('El rubro es obligatorio.');
+    }
+
+    if (Number.isNaN(original) || original <= 0) {
+      throw new Error('El precio original debe ser mayor a 0.');
+    }
+
+    if (Number.isNaN(descuento) || descuento <= 0) {
+      throw new Error('El precio con descuento debe ser mayor a 0.');
+    }
+
+    if (descuento >= original) {
+      throw new Error('El precio con descuento debe ser menor al precio original.');
+    }
+
+    const validationErrors = validateFormFields(form, ['titulo', 'descripcion', 'imagen']);
+    if (Object.keys(validationErrors).length > 0) {
+      throw new Error(Object.values(validationErrors)[0]);
+    }
+  };
 
   const clearForm = () => {
-    setForm(INITIAL_FORM);
+    setForm({ 
+      ...INITIAL_FORM, 
+      empresaId: isAdmin && empresas.length > 0 ? empresas[0].id : '' 
+    });
     setEditingId(null);
   };
 
@@ -73,6 +132,7 @@ export const EmpresaOfertasAdmin = () => {
       fechaExpiracion: toInputDate(oferta.fechaExpiracion),
       imagen: oferta.imagen || '',
       disponible: typeof oferta.disponible === 'boolean' ? oferta.disponible : true,
+      empresaId: oferta.empresaId || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -83,10 +143,28 @@ export const EmpresaOfertasAdmin = () => {
     setError('');
 
     try {
+      validateForm();
+
+      if (!isAdmin && !user?.empresaId) {
+        throw new Error('No tienes una empresa asociada.');
+      }
+
+      if (isAdmin && !form.empresaId) {
+        throw new Error('Debes seleccionar una empresa.');
+      }
+
+      const formData = { ...form };
+      if (isAdmin) {
+        const selectedEmpresa = empresas.find((e) => e.id === form.empresaId);
+        if (!selectedEmpresa) throw new Error('Empresa no válida.');
+        formData.empresaId = selectedEmpresa.id;
+        formData.empresaNombre = selectedEmpresa.nombreEmpresa;
+      }
+
       if (isEditing) {
-        await actualizarOfertaEmpresa(editingId, form);
+        await actualizarOfertaEmpresa(editingId, formData, user);
       } else {
-        await crearOfertaEmpresa(form, user);
+        await crearOfertaEmpresa(formData, user);
       }
 
       clearForm();
@@ -105,7 +183,7 @@ export const EmpresaOfertasAdmin = () => {
     if (!confirmed) return;
 
     try {
-      await eliminarOfertaEmpresa(id);
+      await eliminarOfertaEmpresa(id, user);
       await loadOfertas();
     } catch (err) {
       setError(err.message || 'No se pudo eliminar la oferta.');
@@ -117,12 +195,21 @@ export const EmpresaOfertasAdmin = () => {
       <Header />
 
       <div className="container mx-auto px-4 py-8 space-y-6">
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-sky-100">
-          <h1 className="text-3xl font-bold text-gray-800">Gestión de Ofertas de Empresa</h1>
-          <p className="text-gray-600 mt-2">
-            Administra ofertas de{' '}
-            {user?.empresa || user?.empresaNombre || user?.nombreEmpresa || 'tu empresa'}.
-          </p>
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-sky-100 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Gestión de Ofertas de Empresa</h1>
+            <p className="text-gray-600 mt-2">
+              Administra ofertas de{' '}
+              {user?.empresa || user?.empresaNombre || user?.nombreEmpresa || 'tu empresa'}.
+            </p>
+          </div>
+
+          <Link
+            to="/admin"
+            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
+          >
+            Volver al panel de admin
+          </Link>
         </div>
 
         {error && (
@@ -137,25 +224,56 @@ export const EmpresaOfertasAdmin = () => {
           </h2>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isAdmin && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seleccionar Empresa *
+                </label>
+                <select
+                  value={form.empresaId}
+                  onChange={(e) => setForm({ ...form, empresaId: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  required
+                >
+                  <option value="">-- Selecciona una empresa --</option>
+                  {empresas.map((empresa) => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nombreEmpresa} ({empresa.rubroEmpresa})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <InputField
               label="Título"
               value={form.titulo}
-              onChange={(value) => setForm({ ...form, titulo: value })}
+              onChange={(value) => setForm({ ...form, titulo: sanitizeByField('titulo', value) })}
               required
             />
-            <InputField
-              label="Rubro"
-              value={form.rubro}
-              onChange={(value) => setForm({ ...form, rubro: value })}
-              required
-            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Rubro</label>
+              <select
+                value={form.rubro}
+                onChange={(e) => setForm({ ...form, rubro: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                required
+              >
+                <option value="">-- Selecciona un rubro --</option>
+                {RUBROS.map((rubro) => (
+                  <option key={rubro.value} value={rubro.value}>
+                    {rubro.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <InputField
               label="Precio original"
               type="number"
               min="0"
               step="0.01"
               value={form.precioOriginal}
-              onChange={(value) => setForm({ ...form, precioOriginal: value })}
+              onChange={(value) => setForm({ ...form, precioOriginal: sanitizeByField('precioOriginal', value) })}
               required
             />
             <InputField
@@ -164,12 +282,13 @@ export const EmpresaOfertasAdmin = () => {
               min="0"
               step="0.01"
               value={form.precioDescuento}
-              onChange={(value) => setForm({ ...form, precioDescuento: value })}
+              onChange={(value) => setForm({ ...form, precioDescuento: sanitizeByField('precioDescuento', value) })}
               required
             />
             <InputField
               label="Fecha de expiración"
               type="date"
+              min={new Date().toISOString().split('T')[0]}
               value={form.fechaExpiracion}
               onChange={(value) => setForm({ ...form, fechaExpiracion: value })}
               required
@@ -177,7 +296,7 @@ export const EmpresaOfertasAdmin = () => {
             <InputField
               label="URL imagen"
               value={form.imagen}
-              onChange={(value) => setForm({ ...form, imagen: value })}
+              onChange={(value) => setForm({ ...form, imagen: sanitizeByField('imagen', value) })}
             />
 
             <div className="md:col-span-2">
@@ -186,7 +305,7 @@ export const EmpresaOfertasAdmin = () => {
               </label>
               <textarea
                 value={form.descripcion}
-                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                onChange={(e) => setForm({ ...form, descripcion: sanitizeByField('descripcion', e.target.value) })}
                 rows={3}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 required

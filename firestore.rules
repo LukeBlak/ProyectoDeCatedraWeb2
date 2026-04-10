@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Regla temporal para entorno academico con autenticacion personalizada en frontend.
+    // Para produccion real, migra a Firebase Authentication y valida roles con custom claims.
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

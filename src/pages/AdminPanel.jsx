@@ -1,14 +1,21 @@
 // src/pages/AdminPanel.jsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { StatCard } from '../components/common/StatCard';
+import { getEmpresasYClientesDetalle } from '../services/clientesService';
 
 export const AdminPanel = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [expandedSection, setExpandedSection] = useState(null);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [stats, setStats] = useState({
+    totalEmpresas: '-',
+    totalClientes: '-',
+    totalEmpleados: '-',
+    ofertasActivas: '-',
+  });
 
   const handleLogout = () => {
     logout();
@@ -24,6 +31,7 @@ export const AdminPanel = () => {
       color: 'from-blue-500 to-blue-600',
       links: [
         { label: 'Detalle de Empresas y Clientes', href: '/admin/empresas-clientes' },
+        { label: 'Agregar Empresa', href: '/admin/empresas/nueva' },
         { label: 'Gestión de Ofertas de Empresa', href: '/empresa/ofertas' }
       ]
     },
@@ -62,11 +70,34 @@ export const AdminPanel = () => {
     }
   ];
 
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        const response = await getEmpresasYClientesDetalle();
+        setStats({
+          totalEmpresas: response.resumen.totalEmpresas,
+          totalClientes: response.resumen.totalClientes,
+          totalEmpleados: response.resumen.totalEmpleados,
+          ofertasActivas: response.resumen.ofertasActivas,
+        });
+      } catch (_error) {
+        setStats({
+          totalEmpresas: '-',
+          totalClientes: '-',
+          totalEmpleados: '-',
+          ofertasActivas: '-',
+        });
+      }
+    };
+
+    loadStats();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       {/* Header */}
       <div className="bg-gradient-to-r from-sky-600 via-emerald-500 to-sky-600 text-white py-8 shadow-lg">
-        <div className="container mx-auto px-4">
+        <div className="container mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-4">
             <div className="flex items-center gap-3">
               <span className="text-4xl">⚙️</span>
@@ -137,7 +168,7 @@ export const AdminPanel = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto max-w-7xl px-6 lg:px-8 py-6">
         <Link
           to="/"
           className="inline-flex items-center gap-2 bg-white text-sky-700 px-5 py-3 rounded-full shadow-md hover:shadow-xl transition"
@@ -148,7 +179,7 @@ export const AdminPanel = () => {
       </div>
 
       {/* Content */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto max-w-7xl px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {sections.map((section) => (
             <div
@@ -200,46 +231,11 @@ export const AdminPanel = () => {
         </div>
 
         {/* Statistics Section */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Empresas</p>
-                <p className="text-3xl font-bold text-blue-600 mt-2">-</p>
-              </div>
-              <span className="text-4xl">🏢</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-purple-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Empleados</p>
-                <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
-              </div>
-              <span className="text-4xl">👥</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-emerald-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Rubros</p>
-                <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
-              </div>
-              <span className="text-4xl">📂</span>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-md p-6 border-l-4 border-orange-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Ofertas Pendientes</p>
-                <p className="text-3xl font-bold text-orange-600 mt-2">-</p>
-              </div>
-              <span className="text-4xl">✨</span>
-            </div>
-          </div>
+        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          <StatCard label="Empresas" value={stats.totalEmpresas} color="text-blue-600" />
+          <StatCard label="Clientes" value={stats.totalClientes} color="text-emerald-600" />
+          <StatCard label="Empleados" value={stats.totalEmpleados} color="text-purple-600" />
+          <StatCard label="Ofertas Activas" value={stats.ofertasActivas} color="text-orange-600" />
         </div>
 
         {/* Info Box */}

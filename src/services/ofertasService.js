@@ -18,6 +18,8 @@ const COLLECTION_NAME = 'ofertas';
 
 const normalize = (value) => String(value || '').trim().toLowerCase();
 
+const normalizeText = (value) => String(value || '').trim();
+
 const matchesEmpresa = (oferta, user) => {
   const userEmpresaId = normalize(user?.empresaId);
   const ofertaEmpresaId = normalize(oferta?.empresaId);
@@ -44,7 +46,67 @@ const parseDate = (dateValue) => {
   return Number.isNaN(date.getTime()) ? null : Timestamp.fromDate(date);
 };
 
+const validateOfertaPayload = (ofertaData) => {
+  const titulo = normalizeText(ofertaData.titulo);
+  const descripcion = normalizeText(ofertaData.descripcion);
+  const rubro = normalizeText(ofertaData.rubro);
+  const precioOriginal = Number(ofertaData.precioOriginal);
+  const precioDescuento = Number(ofertaData.precioDescuento);
+  const fechaExpiracion = parseDate(ofertaData.fechaExpiracion);
+
+  if (titulo.length < 3) {
+    throw new Error('El titulo debe tener al menos 3 caracteres.');
+  }
+
+  if (descripcion.length < 10) {
+    throw new Error('La descripcion debe tener al menos 10 caracteres.');
+  }
+
+  if (!rubro) {
+    throw new Error('Debes especificar un rubro para la oferta.');
+  }
+
+  if (Number.isNaN(precioOriginal) || precioOriginal <= 0) {
+    throw new Error('El precio original debe ser mayor a 0.');
+  }
+
+  if (Number.isNaN(precioDescuento) || precioDescuento <= 0) {
+    throw new Error('El precio con descuento debe ser mayor a 0.');
+  }
+
+  if (precioDescuento >= precioOriginal) {
+    throw new Error('El precio con descuento debe ser menor que el precio original.');
+  }
+
+  if (!fechaExpiracion) {
+    throw new Error('La fecha de expiracion no es valida.');
+  }
+
+  return { precioOriginal, precioDescuento, fechaExpiracion };
+};
+
+const assertCanManageOferta = async (id, user) => {
+  if (!user) {
+    throw new Error('Usuario no autenticado.');
+  }
+
+  if (user.rol === 'admin') {
+    return;
+  }
+
+  const oferta = await getOfertaById(id);
+  if (!oferta) {
+    throw new Error('La oferta no existe.');
+  }
+
+  if (!matchesEmpresa(oferta, user)) {
+    throw new Error('No tienes permisos para gestionar esta oferta.');
+  }
+};
+
 const ofertaBasePayload = (ofertaData) => {
+  validateOfertaPayload(ofertaData);
+
   const precioOriginal = Number(ofertaData.precioOriginal);
   const precioDescuento = Number(ofertaData.precioDescuento);
 
@@ -115,26 +177,49 @@ export const getRubros = async () => {
 };
 
 export const getOfertasEmpresaAdmin = async (user) => {
-  const ofertas = await getOfertas();
+  if (!user) return [];
 
   if (user?.rol === 'admin') {
-    return ofertas;
+    return getOfertas();
   }
+
+  const userEmpresaId = normalize(user?.empresaId);
+  if (userEmpresaId) {
+    const ofertasCol = collection(db, COLLECTION_NAME);
+    const q = query(ofertasCol, where('empresaId', '==', userEmpresaId), orderBy('fechaExpiracion', 'asc'));
+    const ofertaSnapshot = await getDocs(q);
+
+    return ofertaSnapshot.docs.map((docData) => ({
+      id: docData.id,
+      ...docData.data(),
+    }));
+  }
+
+  const ofertas = await getOfertas();
 
   return ofertas.filter((oferta) => matchesEmpresa(oferta, user));
 };
 
 export const crearOfertaEmpresa = async (ofertaData, user) => {
+  if (!user) {
+    throw new Error('Debes iniciar sesion para crear una oferta.');
+  }
+
+  if (!['admin', 'admin_empresa', 'empleado'].includes(user?.rol)) {
+    throw new Error('No tienes permisos para crear ofertas.');
+  }
+
   const payload = ofertaBasePayload(ofertaData);
 
-  const empresaNombre =
-    user?.empresa || user?.empresaNombre || user?.nombreEmpresa || 'Mi empresa';
+  // Si viene empresaId en ofertaData (admin seleccionó empresa), usar ese
+  const empresaId = ofertaData.empresaId || user?.empresaId || null;
+  const empresaNombre = ofertaData.empresaNombre || user?.empresa || user?.empresaNombre || user?.nombreEmpresa || 'Mi empresa';
 
   const nuevaOferta = {
     ...payload,
     empresa: empresaNombre,
     empresaNombre: empresaNombre,
-    empresaId: user?.empresaId || null,
+    empresaId: empresaId,
     creadoPor: user?.id || user?.uid || null,
     fechaInicio: serverTimestamp(),
     fechaCreacion: serverTimestamp(),
@@ -145,7 +230,8 @@ export const crearOfertaEmpresa = async (ofertaData, user) => {
   return { id: docRef.id, ...nuevaOferta };
 };
 
-export const actualizarOfertaEmpresa = async (id, ofertaData) => {
+export const actualizarOfertaEmpresa = async (id, ofertaData, user) => {
+  await assertCanManageOferta(id, user);
   const payload = ofertaBasePayload(ofertaData);
 
   await updateDoc(doc(db, COLLECTION_NAME, id), {
@@ -156,7 +242,8 @@ export const actualizarOfertaEmpresa = async (id, ofertaData) => {
   return { success: true };
 };
 
-export const eliminarOfertaEmpresa = async (id) => {
+export const eliminarOfertaEmpresa = async (id, user) => {
+  await assertCanManageOferta(id, user);
   await deleteDoc(doc(db, COLLECTION_NAME, id));
   return { success: true };
 };

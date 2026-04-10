@@ -15,6 +15,7 @@ import { EmpresaOfertasAdmin } from '../pages/EmpresaOfertasAdmin';
 import { DetalleOferta } from '../pages/DetalleOferta';
 import { VerEmpleados } from '../pages/VerEmpleados';
 import { AgregarEmpleado } from '../pages/AgregarEmpleado';
+import { AgregarEmpresa } from '../pages/AgregarEmpresa';
 
 export const AppRoutes = () => {
   return (
@@ -58,6 +59,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <AdminEmpresasClientes />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/empresas/nueva"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AgregarEmpresa />
           </ProtectedRoute>
         }
       />

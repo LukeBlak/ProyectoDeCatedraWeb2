@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {Header} from '../components/common/Header';
 import {Footer} from '../components/common/Footer';
 import {Button} from '../components/common/Button';
+import { sanitizeByField, validateFormFields, validateField } from '../utils/formSecurity';
 
 export const MiPerfil = () => {
   //Obtener usuario autenticado y funcion para actualizarlo desde el contexto
@@ -44,7 +45,7 @@ export const MiPerfil = () => {
   //Maneja cambios en el formulario de perfil
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: sanitizeByField(name, value) }));
   };
 
 
@@ -60,6 +61,18 @@ export const MiPerfil = () => {
     setMensaje({ tipo: '', texto: '' });
 
     try {
+      const validationErrors = validateFormFields(formData, [
+        'nombres',
+        'apellidos',
+        'telefono',
+        'direccion',
+      ]);
+      if (Object.keys(validationErrors).length > 0) {
+        setMensaje({ tipo: 'error', texto: Object.values(validationErrors)[0] });
+        setLoading(false);
+        return;
+      }
+
       //Actualiza datos en firestore
       await authService.actualizarPerfil(user.id, formData);
       //Actualiza datos en el contexto global
@@ -80,6 +93,13 @@ export const MiPerfil = () => {
 
 
     //Valida que las contraseñas coincidan
+    const nuevaPasswordError = validateField('nuevaPassword', passwordData.nuevaPassword);
+    if (nuevaPasswordError) {
+      setMensaje({ tipo: 'error', texto: nuevaPasswordError });
+      setLoading(false);
+      return;
+    }
+
     if (passwordData.nuevaPassword !== passwordData.confirmarPassword) {
       setMensaje({ tipo: 'error', texto: 'Las contraseñas no coinciden' });
       setLoading(false);
