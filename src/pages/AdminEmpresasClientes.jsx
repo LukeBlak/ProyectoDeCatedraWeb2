@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
+import { StatCard } from '../components/common/StatCard';
 import { getEmpresasYClientesDetalle } from '../services/clientesService';
 
 export const AdminEmpresasClientes = () => {
@@ -17,6 +19,8 @@ export const AdminEmpresasClientes = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchEmpresa, setSearchEmpresa] = useState('');
+  const [estadoCliente, setEstadoCliente] = useState('todos');
 
   const loadData = async () => {
     setLoading(true);
@@ -35,16 +39,37 @@ export const AdminEmpresasClientes = () => {
     loadData();
   }, []);
 
+  const empresasFiltradas = data.empresasDetalle.filter((empresa) =>
+    [empresa.nombre, empresa.rubro, empresa.contacto]
+      .join(' ')
+      .toLowerCase()
+      .includes(searchEmpresa.toLowerCase())
+  );
+
+  const clientesFiltrados = data.clientesDetalle.filter((cliente) => {
+    if (estadoCliente === 'todos') return true;
+    return cliente.estado === estadoCliente;
+  });
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50">
       <Header />
 
       <div className="container mx-auto px-4 py-8 space-y-8">
-        <div className="bg-white rounded-2xl shadow-md p-6 border border-sky-100">
-          <h1 className="text-3xl font-bold text-gray-800">Detalle de Empresas y Clientes</h1>
-          <p className="text-gray-600 mt-2">
-            Vista consolidada para administración global de la plataforma.
-          </p>
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-sky-100 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Detalle de Empresas y Clientes</h1>
+            <p className="text-gray-600 mt-2">
+              Vista consolidada para administración global de la plataforma.
+            </p>
+          </div>
+
+          <Link
+            to="/admin"
+            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
+          >
+            Volver al panel de admin
+          </Link>
         </div>
 
         {loading && (
@@ -68,18 +93,27 @@ export const AdminEmpresasClientes = () => {
 
         {!loading && !error && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <CardMetric label="Empresas" value={data.resumen.totalEmpresas} color="text-blue-600" />
-              <CardMetric label="Clientes" value={data.resumen.totalClientes} color="text-emerald-600" />
-              <CardMetric label="Empleados" value={data.resumen.totalEmpleados} color="text-violet-600" />
-              <CardMetric label="Ofertas" value={data.resumen.totalOfertas} color="text-orange-600" />
-              <CardMetric label="Ofertas Activas" value={data.resumen.ofertasActivas} color="text-sky-600" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
+              <StatCard label="Empresas" value={data.resumen.totalEmpresas} color="text-blue-600" />
+              <StatCard label="Clientes" value={data.resumen.totalClientes} color="text-emerald-600" />
+              <StatCard label="Empleados" value={data.resumen.totalEmpleados} color="text-violet-600" />
+              <StatCard label="Ofertas" value={data.resumen.totalOfertas} color="text-orange-600" />
+              <StatCard label="Ofertas Activas" value={data.resumen.ofertasActivas} color="text-sky-600" />
             </div>
 
             <section className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
               <div className="p-5 border-b bg-gradient-to-r from-blue-50 to-sky-50">
                 <h2 className="text-xl font-bold text-gray-800">Empresas</h2>
                 <p className="text-gray-600 text-sm mt-1">Detalle operativo por empresa</p>
+                <div className="mt-4">
+                  <input
+                    type="text"
+                    value={searchEmpresa}
+                    onChange={(event) => setSearchEmpresa(event.target.value)}
+                    className="w-full md:w-96 rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    placeholder="Buscar por nombre, rubro o contacto"
+                  />
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -96,7 +130,7 @@ export const AdminEmpresasClientes = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.empresasDetalle.map((empresa) => (
+                    {empresasFiltradas.map((empresa) => (
                       <tr key={empresa.id} className="border-t hover:bg-sky-50/40">
                         <td className="px-4 py-3 font-semibold text-gray-800">{empresa.nombre}</td>
                         <td className="px-4 py-3 capitalize">{empresa.rubro}</td>
@@ -116,6 +150,17 @@ export const AdminEmpresasClientes = () => {
               <div className="p-5 border-b bg-gradient-to-r from-emerald-50 to-sky-50">
                 <h2 className="text-xl font-bold text-gray-800">Clientes</h2>
                 <p className="text-gray-600 text-sm mt-1">Últimos clientes registrados en la plataforma</p>
+                <div className="mt-4 w-full md:w-64">
+                  <select
+                    value={estadoCliente}
+                    onChange={(event) => setEstadoCliente(event.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="todos">Todos los estados</option>
+                    <option value="activo">Activos</option>
+                    <option value="inactivo">Inactivos</option>
+                  </select>
+                </div>
               </div>
 
               <div className="overflow-x-auto">
@@ -130,7 +175,7 @@ export const AdminEmpresasClientes = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.clientesDetalle.map((cliente) => (
+                    {clientesFiltrados.map((cliente) => (
                       <tr key={cliente.id} className="border-t hover:bg-emerald-50/40">
                         <td className="px-4 py-3 font-medium text-gray-800">{cliente.nombre}</td>
                         <td className="px-4 py-3">{cliente.email}</td>
@@ -161,10 +206,3 @@ export const AdminEmpresasClientes = () => {
     </div>
   );
 };
-
-const CardMetric = ({ label, value, color }) => (
-  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-    <p className="text-gray-500 text-sm">{label}</p>
-    <p className={`text-3xl font-bold mt-1 ${color}`}>{value}</p>
-  </div>
-);

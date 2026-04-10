@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { AuthLayout } from "../layouts/AuthLayout";
 import { Button } from "../components/common/Button";
+import { sanitizeByField, validateField } from "../utils/formSecurity";
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -25,7 +26,8 @@ export const Login = () => {
   // Se encarga de ir actualizando el formulario en tiempo real mientras se va escribiendo 
   const handleChange = (e) => {
     const { name, value } = e.target; // name = el campo, value = lo que se escribe 
-    setFormData((prev) => ({ ...prev, [name]: value })); // actualiza el cambio modificado
+    const sanitizedValue = sanitizeByField(name, value);
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue })); // actualiza el cambio modificado
     setError("");
   };
 
@@ -36,6 +38,13 @@ export const Login = () => {
 
     if (!formData.email || !formData.password) {
       setError("Por favor completa todos los campos");
+      return;
+    }
+
+    const emailError = validateField("email", formData.email);
+    const passwordError = validateField("password", formData.password);
+    if (emailError || passwordError) {
+      setError(emailError || passwordError);
       return;
     }
 

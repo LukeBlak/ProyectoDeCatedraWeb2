@@ -9,6 +9,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { sanitizeByField, validateFormFields, validateField, hasUnsafeContent } from '../utils/formSecurity';
 
 // Función para hashear contraseñas (simple, en producción se sugiere usar bcrypt)
 const hashPassword = (password) => {
@@ -32,35 +33,58 @@ export const authService = {
   // ==================== REGISTRO ====================
   register: async (userData) => {
     try {
+      const cleanData = {
+        ...userData,
+        nombres: sanitizeByField('nombres', userData.nombres),
+        apellidos: sanitizeByField('apellidos', userData.apellidos),
+        email: sanitizeByField('email', userData.email),
+        telefono: sanitizeByField('telefono', userData.telefono),
+        direccion: sanitizeByField('direccion', userData.direccion),
+        dui: sanitizeByField('dui', userData.dui),
+      };
+
+      const securityErrors = validateFormFields(cleanData, [
+        'nombres',
+        'apellidos',
+        'email',
+        'telefono',
+        'direccion',
+        'dui',
+        'password',
+      ]);
+      if (Object.keys(securityErrors).length > 0) {
+        throw new Error(Object.values(securityErrors)[0]);
+      }
+
       // Validaciones
-      if (!userData.nombres || userData.nombres.trim().length < 2) {
+      if (!cleanData.nombres || cleanData.nombres.trim().length < 2) {
         throw new Error('El nombre debe tener al menos 2 caracteres');
       }
 
-      if (!userData.apellidos || userData.apellidos.trim().length < 2) {
+      if (!cleanData.apellidos || cleanData.apellidos.trim().length < 2) {
         throw new Error('El apellido debe tener al menos 2 caracteres');
       }
 
-      if (!isValidEmail(userData.email)) {
+      if (!isValidEmail(cleanData.email)) {
         throw new Error('Correo electrónico inválido');
       }
 
-      if (!userData.password || userData.password.length < 6) {
+      if (!cleanData.password || cleanData.password.length < 6) {
         throw new Error('La contraseña debe tener al menos 6 caracteres');
       }
 
-      if (!isValidDUI(userData.dui)) {
+      if (!isValidDUI(cleanData.dui)) {
         throw new Error('DUI inválido. Formato: 12345678-9');
       }
 
-      if (!userData.telefono || userData.telefono.length < 8) {
+      if (!cleanData.telefono || cleanData.telefono.length < 8) {
         throw new Error('Teléfono inválido');
       }
 
       // Verificar si el email ya existe
       const emailQuery = query(
         collection(db, 'usuarios'),
-        where('email', '==', userData.email.toLowerCase())
+        where('email', '==', cleanData.email.toLowerCase())
       );
       const emailSnapshot = await getDocs(emailQuery);
 
@@ -71,7 +95,7 @@ export const authService = {
       // Verificar si el DUI ya existe
       const duiQuery = query(
         collection(db, 'usuarios'),
-        where('dui', '==', userData.dui)
+        where('dui', '==', cleanData.dui)
       );
       const duiSnapshot = await getDocs(duiQuery);
 
@@ -81,16 +105,16 @@ export const authService = {
 
       // Crear usuario
       const nuevoUsuario = {
-        nombres: userData.nombres.trim(),
-        apellidos: userData.apellidos.trim(),
-        email: userData.email.toLowerCase().trim(),
-        password: hashPassword(userData.password), // Hasheada
-        telefono: userData.telefono.trim(),
-        direccion: userData.direccion?.trim() || '',
-        dui: userData.dui.trim(),
+        nombres: cleanData.nombres.trim(),
+        apellidos: cleanData.apellidos.trim(),
+        email: cleanData.email.toLowerCase().trim(),
+        password: hashPassword(cleanData.password), // Hasheada
+        telefono: cleanData.telefono.trim(),
+        direccion: cleanData.direccion?.trim() || '',
+        dui: cleanData.dui.trim(),
         fechaRegistro: serverTimestamp(),
         ultimoAcceso: serverTimestamp(),
-        rol: userData.rol || 'cliente', // Permitir especificar rol, default 'cliente'
+        rol: cleanData.rol || 'cliente', // Permitir especificar rol, default 'cliente'
         activo: true
       };
 
@@ -112,19 +136,25 @@ export const authService = {
   // ==================== LOGIN ====================
   login: async (email, password) => {
     try {
+      const cleanEmail = sanitizeByField('email', email);
+
       // Validaciones básicas
-      if (!email || !password) {
+      if (!cleanEmail || !password) {
         throw new Error('Email y contraseña son requeridos');
       }
 
-      if (!isValidEmail(email)) {
+      if (!isValidEmail(cleanEmail)) {
         throw new Error('Correo electrónico o contraseña inválidos. Por favor, cuelva a intentarlo');
+      }
+
+      if (hasUnsafeContent(cleanEmail)) {
+        throw new Error('Entrada inválida detectada en el correo.');
       }
 
       // Buscar usuario por email
       const q = query(
         collection(db, 'usuarios'),
-        where('email', '==', email.toLowerCase())
+        where('email', '==', cleanEmail.toLowerCase())
       );
 
       const querySnapshot = await getDocs(q);
@@ -226,9 +256,8 @@ export const authService = {
   // ==================== CAMBIAR CONTRASEÑA (usuario logueado) ====================
   cambiarPassword: async (userId, passwordActual, nuevaPassword) => {
     try {
-      if (nuevaPassword.length < 6) {
-        throw new Error('La nueva contraseña debe tener al menos 6 caracteres');
-      }
+      const passwordError = validateField('nuevaPassword', nuevaPassword);
+      if (passwordError) throw new Error(passwordError);
 
       // Obtener usuario
       const userDoc = await getDocs(query(
@@ -266,16 +295,21 @@ export const authService = {
       const datosPermitidos = {};
 
       if (datosActualizados.nombres) {
-        datosPermitidos.nombres = datosActualizados.nombres.trim();
+        datosPermitidos.nombres = sanitizeByField('nombres', datosActualizados.nombres).trim();
       }
       if (datosActualizados.apellidos) {
-        datosPermitidos.apellidos = datosActualizados.apellidos.trim();
+        datosPermitidos.apellidos = sanitizeByField('apellidos', datosActualizados.apellidos).trim();
       }
       if (datosActualizados.telefono) {
-        datosPermitidos.telefono = datosActualizados.telefono.trim();
+        datosPermitidos.telefono = sanitizeByField('telefono', datosActualizados.telefono).trim();
       }
       if (datosActualizados.direccion) {
-        datosPermitidos.direccion = datosActualizados.direccion.trim();
+        datosPermitidos.direccion = sanitizeByField('direccion', datosActualizados.direccion).trim();
+      }
+
+      const profileErrors = validateFormFields(datosPermitidos, ['nombres', 'apellidos', 'telefono', 'direccion']);
+      if (Object.keys(profileErrors).length > 0) {
+        throw new Error(Object.values(profileErrors)[0]);
       }
 
       await updateDoc(doc(db, 'usuarios', userId), datosPermitidos);

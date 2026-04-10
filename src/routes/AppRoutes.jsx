@@ -10,12 +10,17 @@ import { MiPerfil } from '../pages/MiPerfil';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Ofertas } from "../pages/Ofertas";
 import { AdminPanel } from "../pages/AdminPanel";
+import VerRubros from "../pages/VerRubros";
+import CrearRubro from "../pages/CrearRubro";
+import OfertasPendientes from "../pages/OfertasPendientes";
+import HistorialOfertas from "../pages/HistorialOfertas";
 import { AdminEmpresasClientes } from '../pages/AdminEmpresasClientes';
 import { EmpresaOfertasAdmin } from '../pages/EmpresaOfertasAdmin';
 import { DetalleOferta } from '../pages/DetalleOferta';
 import { VerEmpleados } from '../pages/VerEmpleados';
 import { AgregarEmpleado } from '../pages/AgregarEmpleado';
 import { MiCarrito } from '../pages/MiCarrito';
+import { AgregarEmpresa } from '../pages/AgregarEmpresa';
 
 export const AppRoutes = () => {
   return (
@@ -64,6 +69,14 @@ export const AppRoutes = () => {
         }
       />
       <Route
+        path="/admin/empresas/nueva"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AgregarEmpresa />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/empresa/ofertas"
         element={
           <ProtectedRoute allowedRoles={['admin', 'empleado', 'admin_empresa']}>
@@ -87,6 +100,42 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+
+        {/* Rutas Rubros */}
+        <Route
+          path="/admin/rubros"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <VerRubros />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/rubros/nuevo"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <CrearRubro />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Rutas Ofertas */}
+        <Route
+          path="/admin/ofertas"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <OfertasPendientes />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/ofertas/historial"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <HistorialOfertas />
+            </ProtectedRoute>
+          }
+        />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />

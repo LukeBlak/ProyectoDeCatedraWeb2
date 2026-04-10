@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {AuthLayout} from '../layouts/AuthLayout';
 import Button from '../components/common/Button';
+import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
 
 export const Register = () => {
   const navigate = useNavigate(); //hook de navegacion
@@ -32,9 +33,10 @@ export const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const sanitizedValue = sanitizeByField(name, value);
 
     //actualiza el valor del formulario
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: sanitizedValue }));
 
     //si hay errores en el campo lo limpia al escribir
     if (errores[name]) {
@@ -44,6 +46,18 @@ export const Register = () => {
 
   const validarFormulario = () => {
     const nuevosErrores = {};
+
+    const securityErrors = validateFormFields(formData, [
+      'nombres',
+      'apellidos',
+      'email',
+      'password',
+      'telefono',
+      'dui',
+      'direccion',
+    ]);
+
+    Object.assign(nuevosErrores, securityErrors);
 
     //validaciones basicas
     if (!formData.nombres.trim()) nuevosErrores.nombres = 'El nombre es requerido';

@@ -45,10 +45,19 @@ export const getEmpresasYClientesDetalle = async () => {
 		empresasMap.set(key, {
 			id: empresa.id,
 			nombre:
-				empresa.nombre || empresa.empresa || empresa.empresaNombre || 'Empresa sin nombre',
-			rubro: empresa.rubro || 'No definido',
-			contacto: empresa.email || empresa.contacto || 'No definido',
-			telefono: empresa.telefono || 'No definido',
+				empresa.nombreEmpresa ||
+				empresa.nombre ||
+				empresa.empresa ||
+				empresa.empresaNombre ||
+				'Empresa sin nombre',
+			rubro: empresa.rubroEmpresa || empresa.rubro || 'No definido',
+			contacto:
+				empresa.nombreContacto ||
+				empresa.contacto ||
+				empresa.emailEmpresa ||
+				empresa.email ||
+				'No definido',
+			telefono: empresa.telefonoContacto || empresa.telefono || 'No definido',
 			ofertasTotales: 0,
 			ofertasActivas: 0,
 			empleados: 0,

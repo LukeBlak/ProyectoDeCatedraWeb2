@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
 
 const initialState = {
   nombres: '',
@@ -20,7 +21,8 @@ export const AgregarEmpleado = () => {
   const [success, setSuccess] = useState('');
 
   const handleChange = e => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: sanitizeByField(name, value) });
   };
 
   const handleSubmit = async e => {
@@ -32,6 +34,22 @@ export const AgregarEmpleado = () => {
       // Validaciones básicas
       if (!form.nombres || !form.apellidos || !form.email || !form.password || !form.telefono || !form.direccion || !form.dui) {
         setError('Todos los campos son obligatorios');
+        setLoading(false);
+        return;
+      }
+
+      const validationErrors = validateFormFields(form, [
+        'nombres',
+        'apellidos',
+        'email',
+        'password',
+        'telefono',
+        'direccion',
+        'dui',
+      ]);
+      if (Object.keys(validationErrors).length > 0) {
+        const firstError = Object.values(validationErrors)[0];
+        setError(firstError);
         setLoading(false);
         return;
       }
