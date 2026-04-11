@@ -1,7 +1,7 @@
 // src/pages/AgregarEmpleado.jsx
 import React, { useState } from 'react';
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { useNavigate } from 'react-router-dom';
+import { empleadosService } from '../services/empleadosService';
 import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
 
 const initialState = {
@@ -19,10 +19,20 @@ export const AgregarEmpleado = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const handleChange = e => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: sanitizeByField(name, value) });
+    const cleanedValue = sanitizeByField(name, value);
+    setForm(prev => ({ ...prev, [name]: cleanedValue }));
+
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+
+    setError('');
+    setSuccess('');
   };
 
   const handleSubmit = async e => {
@@ -30,66 +40,36 @@ export const AgregarEmpleado = () => {
     setLoading(true);
     setError('');
     setSuccess('');
-    try {
-      // Validaciones básicas
-      if (!form.nombres || !form.apellidos || !form.email || !form.password || !form.telefono || !form.direccion || !form.dui) {
-        setError('Todos los campos son obligatorios');
-        setLoading(false);
-        return;
-      }
+    setErrors({});
 
-      const validationErrors = validateFormFields(form, [
-        'nombres',
-        'apellidos',
-        'email',
-        'password',
-        'telefono',
-        'direccion',
-        'dui',
-      ]);
-      if (Object.keys(validationErrors).length > 0) {
-        const firstError = Object.values(validationErrors)[0];
-        setError(firstError);
-        setLoading(false);
-        return;
-      }
-      // Verificar email único
-      const emailQuery = query(collection(db, 'usuarios'), where('email', '==', form.email.toLowerCase()));
-      const emailSnapshot = await getDocs(emailQuery);
-      if (!emailSnapshot.empty) {
-        setError('Este correo ya está registrado');
-        setLoading(false);
-        return;
-      }
-      // Verificar DUI único
-      const duiQuery = query(collection(db, 'usuarios'), where('dui', '==', form.dui));
-      const duiSnapshot = await getDocs(duiQuery);
-      if (!duiSnapshot.empty) {
-        setError('Este DUI ya está registrado');
-        setLoading(false);
-        return;
-      }
-      // Crear empleado
-      await addDoc(collection(db, 'usuarios'), {
-        ...form,
-        email: form.email.toLowerCase().trim(),
-        nombres: form.nombres.trim(),
-        apellidos: form.apellidos.trim(),
-        telefono: form.telefono.trim(),
-        direccion: form.direccion.trim(),
-        dui: form.dui.trim(),
-        password: btoa(form.password),
-        rol: 'empleado',
-        activo: true,
-        fechaRegistro: serverTimestamp(),
-        ultimoAcceso: serverTimestamp(),
-      });
+    const validationErrors = validateFormFields(form, [
+      'nombres',
+      'apellidos',
+      'email',
+      'password',
+      'telefono',
+      'dui',
+    ]);
+
+    if (!form.direccion.trim()) {
+      validationErrors.direccion = 'La dirección es obligatoria';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await empleadosService.crearEmpleado(form);
       setSuccess('Empleado registrado exitosamente');
       setForm(initialState);
     } catch (err) {
-      setError('Error al registrar empleado');
+      setError(err.message || 'Error al registrar empleado');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -112,31 +92,38 @@ export const AgregarEmpleado = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Nombres</label>
-                <input name="nombres" value={form.nombres} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="nombres" value={form.nombres} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.nombres ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.nombres && <p className="text-red-500 text-sm mt-1">{errors.nombres}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Apellidos</label>
-                <input name="apellidos" value={form.apellidos} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="apellidos" value={form.apellidos} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.apellidos ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.apellidos && <p className="text-red-500 text-sm mt-1">{errors.apellidos}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Correo electrónico</label>
-                <input name="email" type="email" value={form.email} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="email" type="email" value={form.email} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Contraseña</label>
-                <input name="password" type="password" value={form.password} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="password" type="password" value={form.password} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Teléfono</label>
-                <input name="telefono" value={form.telefono} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="telefono" value={form.telefono} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.telefono ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.telefono && <p className="text-red-500 text-sm mt-1">{errors.telefono}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">Dirección</label>
-                <input name="direccion" value={form.direccion} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="direccion" value={form.direccion} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.direccion ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.direccion && <p className="text-red-500 text-sm mt-1">{errors.direccion}</p>}
               </div>
               <div>
                 <label className="block text-gray-700 font-medium mb-1">DUI</label>
-                <input name="dui" value={form.dui} onChange={handleChange} className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-400" />
+                <input name="dui" value={form.dui} onChange={handleChange} className={`w-full px-4 py-2 rounded-lg border ${errors.dui ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-purple-400`} />
+                {errors.dui && <p className="text-red-500 text-sm mt-1">{errors.dui}</p>}
               </div>
             </div>
             {error && <div className="text-red-600 text-sm font-medium">{error}</div>}

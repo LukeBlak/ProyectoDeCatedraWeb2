@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
@@ -19,11 +19,12 @@ export const AgregarEmpresa = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [errors, setErrors] = useState({});
   const [rubros, setRubros] = useState([]);
   const [loadingRubros, setLoadingRubros] = useState(true);
   const navigate = useNavigate();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchRubros = async () => {
       setLoadingRubros(true);
       try {
@@ -34,12 +35,18 @@ export const AgregarEmpresa = () => {
       }
       setLoadingRubros(false);
     };
+
     fetchRubros();
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: sanitizeByField(name, value) });
+    setForm((prev) => ({ ...prev, [name]: sanitizeByField(name, value) }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+    setError('');
+    setSuccess('');
   };
 
   const handleSubmit = async (e) => {
@@ -47,21 +54,27 @@ export const AgregarEmpresa = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setErrors({});
+
+    const validationErrors = validateFormFields(form, [
+      'nombreEmpresa',
+      'rubroEmpresa',
+      'emailEmpresa',
+      'telefonoContacto',
+      'nombreContacto',
+    ]);
+
+    if (!form.rubroEmpresa) {
+      validationErrors.rubroEmpresa = 'Debes seleccionar un rubro.';
+    }
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      setLoading(false);
+      return;
+    }
 
     try {
-      const validationErrors = validateFormFields(form, [
-        'nombreEmpresa',
-        'rubroEmpresa',
-        'emailEmpresa',
-        'telefonoContacto',
-        'nombreContacto',
-      ]);
-      if (Object.keys(validationErrors).length > 0) {
-        setError(Object.values(validationErrors)[0]);
-        setLoading(false);
-        return;
-      }
-
       await empresasService.crearEmpresa(form);
       setSuccess('Empresa registrada exitosamente');
       setForm(initialState);
@@ -108,10 +121,11 @@ export const AgregarEmpresa = () => {
                   name="nombreEmpresa"
                   value={form.nombreEmpresa}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.nombreEmpresa ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-sky-500 focus:outline-none`}
                   placeholder="Ej: Radio Shackla"
                   required
                 />
+                {errors.nombreEmpresa && <p className="text-red-500 text-sm mt-1">{errors.nombreEmpresa}</p>}
               </div>
 
               <div>
@@ -120,7 +134,7 @@ export const AgregarEmpresa = () => {
                   name="rubroEmpresa"
                   value={form.rubroEmpresa}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.rubroEmpresa ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-sky-500 focus:outline-none`}
                   required
                   disabled={loadingRubros}
                 >
@@ -131,6 +145,7 @@ export const AgregarEmpresa = () => {
                     </option>
                   ))}
                 </select>
+                {errors.rubroEmpresa && <p className="text-red-500 text-sm mt-1">{errors.rubroEmpresa}</p>}
               </div>
 
               <div>
@@ -140,10 +155,11 @@ export const AgregarEmpresa = () => {
                   name="emailEmpresa"
                   value={form.emailEmpresa}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.emailEmpresa ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-sky-500 focus:outline-none`}
                   placeholder="empresa@email.com"
                   required
                 />
+                {errors.emailEmpresa && <p className="text-red-500 text-sm mt-1">{errors.emailEmpresa}</p>}
               </div>
 
               <div>
@@ -153,10 +169,11 @@ export const AgregarEmpresa = () => {
                   name="telefonoContacto"
                   value={form.telefonoContacto}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.telefonoContacto ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-sky-500 focus:outline-none`}
                   placeholder="Ej: 2019283700"
                   required
                 />
+                {errors.telefonoContacto && <p className="text-red-500 text-sm mt-1">{errors.telefonoContacto}</p>}
               </div>
 
               <div className="md:col-span-2">
@@ -166,10 +183,11 @@ export const AgregarEmpresa = () => {
                   name="nombreContacto"
                   value={form.nombreContacto}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.nombreContacto ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-sky-500 focus:outline-none`}
                   placeholder="Ej: John Pérez"
                   required
                 />
+                {errors.nombreContacto && <p className="text-red-500 text-sm mt-1">{errors.nombreContacto}</p>}
               </div>
             </div>
 

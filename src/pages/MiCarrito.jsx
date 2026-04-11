@@ -230,9 +230,7 @@ export const MiCarrito = () => {
                                         <span>Total a pagar</span>
                                         <span className="text-2xl font-bold text-emerald-600">${totales.total.toFixed(2)}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border">
-                                        Al hacer clic en pagar, se creará un pedido en el sistema simulando una transacción real y se conectará a Firebase Firestore.
-                                    </p>
+                                    
                                 </div>
 
                                 <div className="flex gap-3">

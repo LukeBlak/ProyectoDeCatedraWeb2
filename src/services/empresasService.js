@@ -10,8 +10,12 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { sanitizeByField, validateFormFields, hasUnsafeContent } from '../utils/formSecurity';
 
 const COLLECTION_NAME = 'empresas';
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidPhone = (telefono) => /^\d{4}-?\d{4}$/.test(telefono);
 
 export const empresasService = {
   // Obtener todas las empresas
@@ -50,33 +54,51 @@ export const empresasService = {
   // Crear nueva empresa
   crearEmpresa: async (empresaData) => {
     try {
-      // Validaciones
-      if (!empresaData.nombreEmpresa || empresaData.nombreEmpresa.trim().length < 3) {
-        throw new Error('El nombre de la empresa debe tener al menos 3 caracteres');
+      const cleanData = {
+        nombreEmpresa: sanitizeByField('nombreEmpresa', empresaData.nombreEmpresa).trim(),
+        rubroEmpresa: sanitizeByField('rubroEmpresa', empresaData.rubroEmpresa).trim(),
+        emailEmpresa: sanitizeByField('emailEmpresa', empresaData.emailEmpresa).trim().toLowerCase(),
+        telefonoContacto: sanitizeByField('telefonoContacto', empresaData.telefonoContacto).trim(),
+        nombreContacto: sanitizeByField('nombreContacto', empresaData.nombreContacto).trim(),
+      };
+
+      const validationErrors = validateFormFields(cleanData, [
+        'nombreEmpresa',
+        'rubroEmpresa',
+        'emailEmpresa',
+        'telefonoContacto',
+        'nombreContacto',
+      ]);
+
+      if (!cleanData.rubroEmpresa) {
+        validationErrors.rubroEmpresa = 'Debes seleccionar un rubro.';
       }
 
-      if (!empresaData.rubroEmpresa || empresaData.rubroEmpresa.trim().length < 2) {
-        throw new Error('El rubro debe tener al menos 2 caracteres');
+      if (Object.keys(validationErrors).length > 0) {
+        throw new Error(Object.values(validationErrors)[0]);
       }
 
-      if (!empresaData.emailEmpresa || !empresaData.emailEmpresa.includes('@')) {
-        throw new Error('El email debe ser válido');
+      if (!isValidEmail(cleanData.emailEmpresa)) {
+        throw new Error('Correo electrónico inválido.');
       }
 
-      if (!empresaData.telefonoContacto || empresaData.telefonoContacto.length < 8) {
-        throw new Error('El teléfono debe tener al menos 8 caracteres');
+      if (!isValidPhone(cleanData.telefonoContacto)) {
+        throw new Error('Formato de teléfono inválido. Usa 7777-7777 o 77777777.');
       }
 
-      if (!empresaData.nombreContacto || empresaData.nombreContacto.trim().length < 3) {
-        throw new Error('El nombre del contacto debe tener al menos 3 caracteres');
+      if (
+        hasUnsafeContent(cleanData.nombreEmpresa) ||
+        hasUnsafeContent(cleanData.nombreContacto)
+      ) {
+        throw new Error('Se detectaron caracteres no permitidos.');
       }
 
       const nuevaEmpresa = {
-        nombreEmpresa: empresaData.nombreEmpresa.trim(),
-        rubroEmpresa: empresaData.rubroEmpresa.trim(),
-        emailEmpresa: empresaData.emailEmpresa.trim().toLowerCase(),
-        telefonoContacto: empresaData.telefonoContacto.trim(),
-        nombreContacto: empresaData.nombreContacto.trim(),
+        nombreEmpresa: cleanData.nombreEmpresa,
+        rubroEmpresa: cleanData.rubroEmpresa,
+        emailEmpresa: cleanData.emailEmpresa,
+        telefonoContacto: cleanData.telefonoContacto,
+        nombreContacto: cleanData.nombreContacto,
         estadoEmpresa: true,
         fechaCreacion: serverTimestamp(),
         fechaModificacion: serverTimestamp(),
@@ -104,7 +126,6 @@ export const empresasService = {
         fechaModificacion: serverTimestamp(),
       };
 
-      // Eliminar valores undefined
       Object.keys(updateData).forEach(
         (key) => updateData[key] === undefined && delete updateData[key]
       );

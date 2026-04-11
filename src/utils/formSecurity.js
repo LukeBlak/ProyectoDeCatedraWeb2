@@ -130,6 +130,11 @@ export const validateField = (name, value) => {
       if (!text || text.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
       return '';
 
+    case 'confirmarPassword':
+      if (!text) return 'Debes confirmar la contraseña.';
+      if (text.length < 6) return 'La contraseña debe tener al menos 6 caracteres.';
+      return '';
+
     default:
       return '';
   }
