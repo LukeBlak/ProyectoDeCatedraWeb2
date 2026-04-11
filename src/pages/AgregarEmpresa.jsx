@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
 import { empresasService } from '../services/empresasService';
-import { RUBROS } from '../utils/rubros';
+import { getRubros } from '../services/rubrosService';
 import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
 
 const initialState = {
@@ -19,7 +19,23 @@ export const AgregarEmpresa = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [rubros, setRubros] = useState([]);
+  const [loadingRubros, setLoadingRubros] = useState(true);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const fetchRubros = async () => {
+      setLoadingRubros(true);
+      try {
+        const data = await getRubros();
+        setRubros(data);
+      } catch (e) {
+        setRubros([]);
+      }
+      setLoadingRubros(false);
+    };
+    fetchRubros();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -106,10 +122,11 @@ export const AgregarEmpresa = () => {
                   onChange={handleChange}
                   className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-sky-500 focus:outline-none"
                   required
+                  disabled={loadingRubros}
                 >
-                  <option value="">Selecciona un rubro</option>
-                  {RUBROS.map((rubro) => (
-                    <option key={rubro.value} value={rubro.value}>
+                  <option value="">{loadingRubros ? 'Cargando rubros...' : 'Selecciona un rubro'}</option>
+                  {rubros.map((rubro) => (
+                    <option key={rubro.value || rubro.id} value={rubro.value || rubro.id}>
                       {rubro.label}
                     </option>
                   ))}
