@@ -5,8 +5,9 @@ import {
   doc,
   getDoc,
   getDocs,
-  orderBy,
+  increment,
   query,
+  runTransaction,
   serverTimestamp,
   Timestamp,
   updateDoc,
@@ -109,6 +110,9 @@ const ofertaBasePayload = (ofertaData) => {
 
   const precioOriginal = Number(ofertaData.precioOriginal);
   const precioDescuento = Number(ofertaData.precioDescuento);
+  const limiteVentas = ofertaData.limiteVentas !== '' && ofertaData.limiteVentas != null
+    ? Number(ofertaData.limiteVentas)
+    : null;
 
   return {
     titulo: ofertaData.titulo?.trim() || '',
@@ -126,38 +130,36 @@ const ofertaBasePayload = (ofertaData) => {
     disponible:
       typeof ofertaData.disponible === 'boolean' ? ofertaData.disponible : true,
     fechaExpiracion: parseDate(ofertaData.fechaExpiracion),
+    limiteVentas: limiteVentas,
   };
 };
 
 export const getOfertas = async () => {
   const ofertasCol = collection(db, COLLECTION_NAME);
-  const q = query(
-    ofertasCol,
-    where('estado', '==', 'aprobada'),
-    where('disponible', '==', true),
-    orderBy('fechaExpiracion', 'asc')
-  );
+  // Traer todas las ofertas con disponible=true (sin filtro de estado para evitar índices compuestos)
+  const q = query(ofertasCol, where('disponible', '==', true));
   const ofertaSnapshot = await getDocs(q);
-  return ofertaSnapshot.docs.map((docData) => ({
-    id: docData.id,
-    ...docData.data(),
-  }));
+  const docs = ofertaSnapshot.docs.map((docData) => ({ id: docData.id, ...docData.data() }));
+  return docs.sort((a, b) => {
+    const fa = a.fechaExpiracion?.toDate?.() ?? new Date(0);
+    const fb = b.fechaExpiracion?.toDate?.() ?? new Date(0);
+    return fa - fb;
+  });
 };
+
 
 export const getOfertasPorRubro = async (rubro) => {
   const ofertasCol = collection(db, COLLECTION_NAME);
-  const q = query(
-    ofertasCol,
-    where('rubro', '==', rubro),
-    where('estado', '==', 'aprobada'),
-    where('disponible', '==', true),
-    orderBy('fechaExpiracion', 'asc')
-  );
+  const q = query(ofertasCol, where('disponible', '==', true));
   const ofertaSnapshot = await getDocs(q);
-  return ofertaSnapshot.docs.map((docData) => ({
-    id: docData.id,
-    ...docData.data(),
-  }));
+  const docs = ofertaSnapshot.docs
+    .map((docData) => ({ id: docData.id, ...docData.data() }))
+    .filter((o) => o.rubro === rubro);
+  return docs.sort((a, b) => {
+    const fa = a.fechaExpiracion?.toDate?.() ?? new Date(0);
+    const fb = b.fechaExpiracion?.toDate?.() ?? new Date(0);
+    return fa - fb;
+  });
 };
 
 export const getOfertaById = async (id) => {
@@ -184,31 +186,38 @@ export const getOfertasEmpresaAdmin = async (user) => {
   if (!user) return [];
 
   if (user?.rol === 'admin' || user?.rol === 'empleado') {
-    // Admin y empleado: ver todas las ofertas sin filtrar
     const ofertasCol = collection(db, COLLECTION_NAME);
-    const q = query(ofertasCol, orderBy('fechaExpiracion', 'asc'));
+    const q = query(ofertasCol);
     const ofertaSnapshot = await getDocs(q);
-    return ofertaSnapshot.docs.map((docData) => ({
+    const docs = ofertaSnapshot.docs.map((docData) => ({
       id: docData.id,
       ...docData.data(),
     }));
+    return docs.sort((a, b) => {
+      const fa = a.fechaExpiracion?.toDate?.() ?? new Date(0);
+      const fb = b.fechaExpiracion?.toDate?.() ?? new Date(0);
+      return fa - fb;
+    });
   }
 
   const userEmpresaId = normalize(user?.empresaId);
   if (userEmpresaId) {
     const ofertasCol = collection(db, COLLECTION_NAME);
-    const q = query(ofertasCol, where('empresaId', '==', userEmpresaId), orderBy('fechaExpiracion', 'asc'));
+    const q = query(ofertasCol, where('empresaId', '==', userEmpresaId));
     const ofertaSnapshot = await getDocs(q);
-
-    return ofertaSnapshot.docs.map((docData) => ({
+    const docs = ofertaSnapshot.docs.map((docData) => ({
       id: docData.id,
       ...docData.data(),
     }));
+    return docs.sort((a, b) => {
+      const fa = a.fechaExpiracion?.toDate?.() ?? new Date(0);
+      const fb = b.fechaExpiracion?.toDate?.() ?? new Date(0);
+      return fa - fb;
+    });
   }
 
-  // Para empleados/admin_empresa: ver todas las ofertas de su empresa
   const ofertasCol = collection(db, COLLECTION_NAME);
-  const q = query(ofertasCol, where('empresaId', '==', user?.empresaId || ''), orderBy('fechaExpiracion', 'asc'));
+  const q = query(ofertasCol, where('empresaId', '==', user?.empresaId || ''));
   const ofertaSnapshot = await getDocs(q);
   return ofertaSnapshot.docs.map((docData) => ({
     id: docData.id,
@@ -242,10 +251,39 @@ export const crearOfertaEmpresa = async (ofertaData, user) => {
     fechaActualizacion: serverTimestamp(),
     estado: 'pendiente',
     disponible: false,
+    cuponesVendidos: 0,
   };
 
   const docRef = await addDoc(collection(db, COLLECTION_NAME), nuevaOferta);
   return { id: docRef.id, ...nuevaOferta };
+};
+
+/**
+ * Incrementa el contador de cupones vendidos de forma atómica.
+ * Verifica que la oferta no haya alcanzado su límite antes de incrementar.
+ * @returns {Promise<void>} - Lanza error si la oferta está agotada.
+ */
+export const incrementarCuponesVendidos = async (ofertaId, cantidad = 1) => {
+  const ofertaRef = doc(db, COLLECTION_NAME, ofertaId);
+
+  await runTransaction(db, async (transaction) => {
+    const ofertaSnap = await transaction.get(ofertaRef);
+    if (!ofertaSnap.exists()) {
+      throw new Error('La oferta no existe.');
+    }
+
+    const data = ofertaSnap.data();
+    const limite = data.limiteVentas;
+    const vendidos = data.cuponesVendidos || 0;
+
+    if (limite != null && (vendidos + cantidad) > limite) {
+      throw new Error(`Esta oferta ya alcanzó su límite de ${limite} cupones vendidos.`);
+    }
+
+    transaction.update(ofertaRef, {
+      cuponesVendidos: increment(cantidad),
+    });
+  });
 };
 
 export const actualizarOfertaEmpresa = async (id, ofertaData, user) => {

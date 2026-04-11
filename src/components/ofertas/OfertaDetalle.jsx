@@ -62,8 +62,15 @@ export const OfertaDetalle = ({ oferta, loading, error }) => {
     fechaInicio,
     fechaExpiracion,
     rubro,
-    disponible
+    disponible,
+    limiteVentas,
+    cuponesVendidos = 0,
   } = oferta;
+
+  const esSoldOut = limiteVentas != null && cuponesVendidos >= limiteVentas;
+  const cuposRestantes = limiteVentas != null ? Math.max(0, limiteVentas - cuponesVendidos) : null;
+  const porcentajeVendido = limiteVentas != null ? Math.min((cuponesVendidos / limiteVentas) * 100, 100) : 0;
+  const pocosRestantes = cuposRestantes != null && cuposRestantes > 0 && cuposRestantes <= 10;
 
   const fechaInicioStr = fechaInicio?.toDate?.()
     ? new Date(fechaInicio.toDate()).toLocaleDateString()
@@ -99,11 +106,11 @@ export const OfertaDetalle = ({ oferta, loading, error }) => {
               <span className="text-9xl">🎫</span>
             </div>
           )}
-          {!disponible && (
+          {(!disponible || esSoldOut) && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="bg-red-600 text-white text-2xl font-bold px-6 py-3 rounded-lg transform -rotate-45">
-                NO DISPONIBLE
-              </span>
+              <div className="bg-red-600 text-white text-2xl font-black px-8 py-4 rounded-xl shadow-2xl border-4 border-white transform -rotate-12 tracking-widest uppercase">
+                {esSoldOut ? 'SOLD OUT' : 'NO DISPONIBLE'}
+              </div>
             </div>
           )}
         </div>
@@ -150,12 +157,41 @@ export const OfertaDetalle = ({ oferta, loading, error }) => {
             </p>
           </div>
 
-          {disponible ? (
+          {/* Barra de cupones disponibles */}
+          {limiteVentas != null && (
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-semibold text-gray-700">Cupones disponibles</span>
+                <span className={`text-sm font-bold ${esSoldOut ? 'text-red-600' : pocosRestantes ? 'text-orange-500' : 'text-emerald-600'}`}>
+                  {esSoldOut ? '¡Agotado!' : `${cuposRestantes} de ${limiteVentas} restantes`}
+                </span>
+              </div>
+              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    esSoldOut ? 'bg-red-500' : pocosRestantes ? 'bg-orange-400' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${porcentajeVendido}%` }}
+                />
+              </div>
+              {pocosRestantes && !esSoldOut && (
+                <p className="text-orange-500 text-sm font-semibold mt-2 flex items-center gap-1">
+                  🔥 ¡Quedan pocos cupones! Date prisa
+                </p>
+              )}
+            </div>
+          )}
+
+          {disponible && !esSoldOut ? (
             <button
               onClick={handleAgregarAlCarrito}
               className={`w-full text-white text-xl font-bold py-4 rounded-xl transition-all transform hover:scale-105 shadow-lg ${agregado ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600'}`}
             >
               {agregado ? '¡Añadido al carrito! ✓' : 'Añadir al carrito'}
+            </button>
+          ) : esSoldOut ? (
+            <button disabled className="w-full bg-red-100 text-red-600 text-xl font-bold py-4 rounded-xl cursor-not-allowed border-2 border-red-300 flex items-center justify-center gap-2">
+              🙅 Cupones agotados — SOLD OUT
             </button>
           ) : (
             <button disabled className="w-full bg-gray-300 text-gray-500 text-xl font-bold py-4 rounded-xl cursor-not-allowed">

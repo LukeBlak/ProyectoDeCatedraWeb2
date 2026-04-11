@@ -5,11 +5,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { StatCard } from '../components/common/StatCard';
 import { getEmpresasYClientesDetalle } from '../services/clientesService';
+import { getOfertasPendientes } from '../services/ofertasPendientesService';
 
 export const AdminPanel = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const [stats, setStats] = useState({
     totalEmpresas: '-',
     totalClientes: '-',
@@ -64,7 +66,7 @@ export const AdminPanel = () => {
       icon: '✨',
       color: 'from-orange-500 to-orange-600',
       links: [
-        { label: 'Ofertas Pendientes', href: '/admin/ofertas' },
+        { label: 'Ofertas Pendientes', href: '/admin/ofertas', badge: true },
         { label: 'Historial de Ofertas', href: '/admin/ofertas/historial' }
       ]
     }
@@ -91,6 +93,11 @@ export const AdminPanel = () => {
     };
 
     loadStats();
+
+    // Cargar count de ofertas pendientes
+    getOfertasPendientes()
+      .then(data => setPendingCount(data.length))
+      .catch(() => {});
   }, []);
 
   return (
@@ -206,9 +213,15 @@ export const AdminPanel = () => {
                       to={link.href}
                       className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg hover:from-sky-50 hover:to-emerald-50 transition group cursor-pointer border border-gray-200"
                     >
-                      <span className="font-medium text-gray-700 group-hover:text-sky-700">
+                      <span className="font-medium text-gray-700 group-hover:text-sky-700 flex items-center gap-2">
                         {link.label}
+                        {link.badge && pendingCount > 0 && (
+                          <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+                            {pendingCount}
+                          </span>
+                        )}
                       </span>
+
                       <svg
                         className="w-5 h-5 text-gray-400 group-hover:text-sky-600 transition transform group-hover:translate-x-1"
                         fill="none"

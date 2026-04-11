@@ -1,4 +1,3 @@
-
 import {
   collection,
   query, 
@@ -10,7 +9,8 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { db } from '../config/firebase'
+import { db } from '../config/firebase';
+import { incrementarCuponesVendidos } from './ofertasService';
 
 export const cuponesService = {
 
@@ -88,6 +88,9 @@ export const cuponesService = {
       fechaLimite.setDate(fechaLimite.getDate() + 30);
 
       for (const item of carrito) {
+        // Verificar límite e incrementar contador de ventas para esta oferta
+        await incrementarCuponesVendidos(item.id, item.cantidad);
+
         // Por cada unidad comprada del mismo producto, se genera un código diferente
         for (let i = 0; i < item.cantidad; i++) {
           const prefijo = item.empresa ? item.empresa.substring(0, 3).toUpperCase() : 'CUP';

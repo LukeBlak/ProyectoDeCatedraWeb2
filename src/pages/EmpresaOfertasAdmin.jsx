@@ -22,6 +22,8 @@ import {
   eliminarOfertaEmpresa,
   getOfertasEmpresaAdmin,
 } from '../services/ofertasService';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 import { empresasService } from '../services/empresasService';
 import { getRubros } from '../services/rubrosService';
 import { sanitizeByField, validateFormFields } from '../utils/formSecurity';
@@ -39,6 +41,7 @@ const INITIAL_FORM = {
   imagen: '',
   disponible: true,
   empresaId: '',
+  limiteVentas: '',
 };
 
 export const EmpresaOfertasAdmin = () => {
@@ -105,6 +108,7 @@ export const EmpresaOfertasAdmin = () => {
     const rubro = String(form.rubro || '').trim();
     const original = Number(form.precioOriginal);
     const descuento = Number(form.precioDescuento);
+    const limite = Number(form.limiteVentas);
 
     if (titulo.length < 3) {
       throw new Error('El titulo debe tener al menos 3 caracteres.');
@@ -128,6 +132,10 @@ export const EmpresaOfertasAdmin = () => {
 
     if (descuento >= original) {
       throw new Error('El precio con descuento debe ser menor al precio original.');
+    }
+
+    if (form.limiteVentas !== '' && (Number.isNaN(limite) || limite < 1)) {
+      throw new Error('El límite de ventas debe ser un número entero mayor a 0.');
     }
 
     const validationErrors = validateFormFields(form, ['titulo', 'descripcion', 'imagen']);
@@ -165,6 +173,7 @@ export const EmpresaOfertasAdmin = () => {
       imagen: oferta.imagen || '',
       disponible: typeof oferta.disponible === 'boolean' ? oferta.disponible : true,
       empresaId: oferta.empresaId || '',
+      limiteVentas: oferta.limiteVentas != null ? String(oferta.limiteVentas) : '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -221,6 +230,21 @@ export const EmpresaOfertasAdmin = () => {
       await loadOfertas();
     } catch (err) {
       setError(err.message || 'No se pudo eliminar la oferta.');
+    }
+  };
+
+  const handleToggleDisponible = async (oferta) => {
+    try {
+      const nuevoEstado = !oferta.disponible;
+      const ofertaRef = doc(db, 'ofertas', oferta.id);
+      await updateDoc(ofertaRef, {
+        disponible: nuevoEstado,
+        // Si se activa, marcar como aprobada también
+        ...(nuevoEstado ? { estado: 'aprobada' } : {}),
+      });
+      await loadOfertas();
+    } catch (err) {
+      setError(err.message || 'No se pudo cambiar el estado de la oferta.');
     }
   };
 
@@ -342,6 +366,15 @@ export const EmpresaOfertasAdmin = () => {
               value={form.imagen}
               onChange={(value) => setForm({ ...form, imagen: sanitizeByField('imagen', value) })}
             />
+            <InputField
+              label="Límite de ventas (cupones)"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Ej: 100 (dejar vacío = sin límite)"
+              value={form.limiteVentas}
+              onChange={(value) => setForm({ ...form, limiteVentas: value })}
+            />
 
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -414,12 +447,17 @@ export const EmpresaOfertasAdmin = () => {
                     <th className="text-left px-4 py-3">Rubro</th>
                     <th className="text-right px-4 py-3">Precio</th>
                     <th className="text-right px-4 py-3">Oferta</th>
+                    <th className="text-center px-4 py-3">Vendidos / Límite</th>
                     <th className="text-left px-4 py-3">Estado</th>
                     <th className="text-right px-4 py-3">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {ofertas.map((oferta) => (
+                  {ofertas.map((oferta) => {
+                    const vendidos = oferta.cuponesVendidos || 0;
+                    const limite = oferta.limiteVentas;
+                    const soldOut = limite != null && vendidos >= limite;
+                    return (
                     <tr key={oferta.id} className="border-t">
                       <td className="px-4 py-3 font-medium text-gray-800">{oferta.titulo}</td>
                       <td className="px-4 py-3 capitalize">{oferta.rubro}</td>
@@ -429,16 +467,40 @@ export const EmpresaOfertasAdmin = () => {
                       <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
                         ${Number(oferta.precioDescuento || 0).toFixed(2)}
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span className={`text-sm font-semibold ${soldOut ? 'text-red-600' : 'text-gray-700'}`}>
+                            {vendidos} / {limite != null ? limite : '∞'}
+                          </span>
+                          {limite != null && (
+                            <div className="w-24 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full transition-all ${soldOut ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                style={{ width: `${Math.min((vendidos / limite) * 100, 100)}%` }}
+                              />
+                            </div>
+                          )}
+                          {soldOut && <span className="text-xs font-bold text-red-600">AGOTADO</span>}
+                        </div>
+                      </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                            oferta.disponible
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : 'bg-red-100 text-red-700'
-                          }`}
-                        >
-                          {oferta.disponible ? 'Activa' : 'Inactiva'}
-                        </span>
+                        {soldOut ? (
+                          <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-gray-200 text-gray-600">
+                            Agotada
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleDisponible(oferta)}
+                            title={oferta.disponible ? 'Clic para desactivar' : 'Clic para activar'}
+                            className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold cursor-pointer transition hover:opacity-75 ${
+                              oferta.disponible
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : 'bg-red-100 text-red-700'
+                            }`}
+                          >
+                            {oferta.disponible ? 'Activa' : 'Inactiva'}
+                          </button>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right space-x-2">
                         <button
@@ -455,7 +517,8 @@ export const EmpresaOfertasAdmin = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
