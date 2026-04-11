@@ -6,6 +6,7 @@ import { Button } from "../components/common/Button";
 import { useNavigate } from "react-router-dom";
 import { useOfertas } from "../hooks/useOfertas";
 import { useCart } from "../hooks/useCart";
+import { OfertaCard } from "../components/ofertas/OfertaCard";
 export const Home = () => {
     const [rubroSeleccionado, setRubroSeleccionado] = useState("todos");
     const navigate = useNavigate();
@@ -41,10 +42,19 @@ export const Home = () => {
         { id: "entretenimiento", nombre: "Entretenimiento", icono: "/icons/music_14126345.png" },
     ];
 
-    // Filtrar ofertas por rubro (solo si hay datos cargados)
-    const ofertasFiltradas = rubroSeleccionado === "todos"
-        ? ofertas.slice(0, 6) // Mostrar máximo 6 en home
-        : ofertas.filter(o => o.rubro === rubroSeleccionado).slice(0, 6);
+    const rubrosUI = [
+      { id: "todos", nombre: "Todos" },
+      ...rubros.map(r => ({
+        id: r,
+        nombre: r
+      }))
+    ];
+
+  const ofertasFiltradas = ofertas.filter(o => {
+    if (!o.disponible) return false;
+    if (rubroSeleccionado === "todos") return true;
+    return o.rubro === rubroSeleccionado;
+  });
 
     // Manejar cambio de rubro
     const handleRubroChange = (rubroId) => {
