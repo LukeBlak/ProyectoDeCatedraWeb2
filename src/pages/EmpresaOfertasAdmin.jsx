@@ -164,7 +164,9 @@ export const EmpresaOfertasAdmin = () => {
       if (isEditing) {
         await actualizarOfertaEmpresa(editingId, formData, user);
       } else {
-        await crearOfertaEmpresa(formData, user);
+        // Eliminar 'disponible' del formData para que el backend lo ponga en false
+        const { disponible, ...formDataSinDisponible } = formData;
+        await crearOfertaEmpresa(formDataSinDisponible, user);
       }
 
       clearForm();
@@ -312,17 +314,20 @@ export const EmpresaOfertasAdmin = () => {
               />
             </div>
 
-            <div className="md:col-span-2 flex items-center gap-2">
-              <input
-                id="disponible"
-                type="checkbox"
-                checked={form.disponible}
-                onChange={(e) => setForm({ ...form, disponible: e.target.checked })}
-              />
-              <label htmlFor="disponible" className="text-sm text-gray-700">
-                Oferta disponible para compra
-              </label>
-            </div>
+            {/* El campo 'disponible' solo se muestra en edición, nunca al crear */}
+            {isEditing && (
+              <div className="md:col-span-2 flex items-center gap-2">
+                <input
+                  id="disponible"
+                  type="checkbox"
+                  checked={form.disponible}
+                  onChange={(e) => setForm({ ...form, disponible: e.target.checked })}
+                />
+                <label htmlFor="disponible" className="text-sm text-gray-700">
+                  Oferta disponible para compra
+                </label>
+              </div>
+            )}
 
             <div className="md:col-span-2 flex flex-wrap gap-3">
               <button

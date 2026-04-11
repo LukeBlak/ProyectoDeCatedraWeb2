@@ -131,9 +131,13 @@ const ofertaBasePayload = (ofertaData) => {
 
 export const getOfertas = async () => {
   const ofertasCol = collection(db, COLLECTION_NAME);
-  const q = query(ofertasCol, orderBy('fechaExpiracion', 'asc'));
+  const q = query(
+    ofertasCol,
+    where('estado', '==', 'aprobada'),
+    where('disponible', '==', true),
+    orderBy('fechaExpiracion', 'asc')
+  );
   const ofertaSnapshot = await getDocs(q);
-
   return ofertaSnapshot.docs.map((docData) => ({
     id: docData.id,
     ...docData.data(),
@@ -145,11 +149,11 @@ export const getOfertasPorRubro = async (rubro) => {
   const q = query(
     ofertasCol,
     where('rubro', '==', rubro),
+    where('estado', '==', 'aprobada'),
     where('disponible', '==', true),
     orderBy('fechaExpiracion', 'asc')
   );
   const ofertaSnapshot = await getDocs(q);
-
   return ofertaSnapshot.docs.map((docData) => ({
     id: docData.id,
     ...docData.data(),
@@ -180,7 +184,14 @@ export const getOfertasEmpresaAdmin = async (user) => {
   if (!user) return [];
 
   if (user?.rol === 'admin') {
-    return getOfertas();
+    // Admin: ver todas las ofertas sin filtrar
+    const ofertasCol = collection(db, COLLECTION_NAME);
+    const q = query(ofertasCol, orderBy('fechaExpiracion', 'asc'));
+    const ofertaSnapshot = await getDocs(q);
+    return ofertaSnapshot.docs.map((docData) => ({
+      id: docData.id,
+      ...docData.data(),
+    }));
   }
 
   const userEmpresaId = normalize(user?.empresaId);
@@ -195,9 +206,14 @@ export const getOfertasEmpresaAdmin = async (user) => {
     }));
   }
 
-  const ofertas = await getOfertas();
-
-  return ofertas.filter((oferta) => matchesEmpresa(oferta, user));
+  // Para empleados/admin_empresa: ver todas las ofertas de su empresa
+  const ofertasCol = collection(db, COLLECTION_NAME);
+  const q = query(ofertasCol, where('empresaId', '==', user?.empresaId || ''), orderBy('fechaExpiracion', 'asc'));
+  const ofertaSnapshot = await getDocs(q);
+  return ofertaSnapshot.docs.map((docData) => ({
+    id: docData.id,
+    ...docData.data(),
+  }));
 };
 
 export const crearOfertaEmpresa = async (ofertaData, user) => {
@@ -224,6 +240,8 @@ export const crearOfertaEmpresa = async (ofertaData, user) => {
     fechaInicio: serverTimestamp(),
     fechaCreacion: serverTimestamp(),
     fechaActualizacion: serverTimestamp(),
+    estado: 'pendiente',
+    disponible: false,
   };
 
   const docRef = await addDoc(collection(db, COLLECTION_NAME), nuevaOferta);
