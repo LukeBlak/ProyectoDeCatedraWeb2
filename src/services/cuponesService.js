@@ -78,7 +78,56 @@ export const cuponesService = {
 
   // ==================== ESCRITURA ====================
 
-  // Crear cupones después de una compra
+  // Generar cupones basados en los elementos del carrito
+  crearCuponesCompraCarrito: async (usuarioId, dui, carrito, pedidoId) => {
+    try {
+      const cuponesCreados = [];
+      const fechaActual = new Date();
+      // Fecha límite general por defecto: 30 días posteriores a la compra
+      const fechaLimite = new Date(fechaActual);
+      fechaLimite.setDate(fechaLimite.getDate() + 30);
+
+      for (const item of carrito) {
+        // Por cada unidad comprada del mismo producto, se genera un código diferente
+        for (let i = 0; i < item.cantidad; i++) {
+          const prefijo = item.empresa ? item.empresa.substring(0, 3).toUpperCase() : 'CUP';
+          const codigoUnico = cuponesService.generarCodigo(prefijo);
+
+          const cuponData = {
+            usuarioId,
+            dui: dui || '',
+            ofertaId: item.id,
+            pedidoId: pedidoId || '',
+            tituloOferta: item.titulo || item.tituloOferta || '',
+            empresaOfertante: item.empresa || item.empresaOfertante || '',
+            precioRegular: item.precioRegular || 0,
+            precioOferta: item.precioOferta || 0,
+            icono: item.icono || '',
+            codigo: codigoUnico,
+            estado: 'disponible',
+            fechaCompra: serverTimestamp(),
+            fechaCreacion: serverTimestamp(),
+            fechaLimiteUso: Timestamp.fromDate(fechaLimite)
+          };
+
+          const docRef = await addDoc(collection(db, 'cupones'), cuponData);
+          cuponesCreados.push({
+            id: docRef.id,
+            ...cuponData,
+            fechaCompra: fechaActual,
+            fechaCreacion: fechaActual,
+            fechaLimiteUso: fechaLimite
+          });
+        }
+      }
+      return cuponesCreados;
+    } catch (error) {
+      console.error('Error al crear los cupones desde el carrito:', error);
+      throw error;
+    }
+  },
+
+  // Crear cupones después de una compra (Metodo legado)
   crearCupones: async (datosCupones) => {
     try {
       // crea una variable vacía

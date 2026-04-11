@@ -7,10 +7,12 @@ import { useAuth } from '../hooks/useAuth';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { useCupones } from '../hooks/useCupones';
 
 export const MiCarrito = () => {
     const { carrito, eliminarDelCarrito, actualizarCantidad, calcularTotales, vaciarCarrito } = useCart();
     const { user } = useAuth();
+    const { comprarCuponesCarrito } = useCupones();
     const totales = calcularTotales();
     const navigate = useNavigate();
 
@@ -28,7 +30,7 @@ export const MiCarrito = () => {
         setProcesando(true);
         try {
             const pedidoRef = collection(db, 'pedidos');
-            await addDoc(pedidoRef, {
+            const docRef = await addDoc(pedidoRef, {
                 usuarioId: user.uid || user.id || 'anonimo',
                 usuarioNombre: user.nombres || '',
                 usuarioEmail: user.email || '',
@@ -37,6 +39,9 @@ export const MiCarrito = () => {
                 fecha: serverTimestamp(),
                 estado: 'completado'
             });
+
+            // Generar los cupones individuales para cada elemento del carrito
+            await comprarCuponesCarrito(carrito, docRef.id);
 
             setProcesando(false);
             setPagoExitoso(true);

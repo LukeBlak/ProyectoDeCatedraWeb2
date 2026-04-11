@@ -104,7 +104,7 @@ const fetchCupones = useCallback(async () => {
     };
 
     /**
-     * Simula la compra de cupones
+     * Simula la compra de cupones (legado)
      */
     const comprarCupones = async (ofertaId, cantidad, datosPago) => {
         setCargando(true);
@@ -124,6 +124,31 @@ const fetchCupones = useCallback(async () => {
             return cuponesComprados;
         } catch (err) {
             setError(err.message || 'Error al comprar cupones');
+            throw err;
+        } finally {
+            setCargando(false);
+        }
+    };
+
+    /**
+     * Procesa la compra de todo el carrito y genera los cupones correspondientes
+     */
+    const comprarCuponesCarrito = async (carrito, pedidoId) => {
+        setCargando(true);
+        setError(null);
+
+        try {
+            const cuponesComprados = await cuponesService.crearCuponesCompraCarrito(
+                user.uid,
+                user.dui,
+                carrito,
+                pedidoId
+            );
+
+            await fetchCupones();
+            return cuponesComprados;
+        } catch (err) {
+            setError(err.message || 'Error al procesar los cupones del carrito');
             throw err;
         } finally {
             setCargando(false);
@@ -238,6 +263,7 @@ const fetchCupones = useCallback(async () => {
         fetchCupones,
         getCuponByCodigo,
         comprarCupones,
+        comprarCuponesCarrito,
         generarPDF,
         canjearCupon,
         validarCupon,
