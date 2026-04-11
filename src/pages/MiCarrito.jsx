@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useCupones } from '../hooks/useCupones';
+import cartIcon from '../img/cart-icon.svg';
 
 export const MiCarrito = () => {
     const { carrito, eliminarDelCarrito, actualizarCantidad, calcularTotales, vaciarCarrito } = useCart();
@@ -68,7 +69,7 @@ export const MiCarrito = () => {
                     {/* Carrito vacío */}
                     {carrito.length === 0 ? (
                         <div className="bg-white rounded-lg shadow p-12 text-center">
-                            <div className="text-6xl mb-4">🛒</div>
+                            <img src={cartIcon} alt="" className="w-16 h-16 mx-auto mb-4 object-contain" />
                             <h2 className="text-2xl font-bold text-gray-800 mb-2">Tu carrito está vacío</h2>
                             <p className="text-gray-600 mb-6">Aún no has agregado ningún producto</p>
                             <Link
