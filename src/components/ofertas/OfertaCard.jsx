@@ -61,10 +61,10 @@ export const OfertaCard = ({ oferta }) => {
 
         <div className="flex items-center gap-3 mb-2">
           <span className="text-gray-400 line-through text-lg">
-            ${precioOriginal?.toFixed(2)}
+            ${Number(precioOriginal || 0).toFixed(2)}
           </span>
           <span className="text-3xl font-bold text-green-600">
-            ${precioDescuento?.toFixed(2)}
+            ${Number(precioDescuento || 0).toFixed(2)}
           </span>
         </div>
 
