@@ -186,21 +186,16 @@ export const EmpresaOfertasAdmin = () => {
     try {
       validateForm();
 
-      if (!isAdmin && !user?.empresaId) {
-        throw new Error('No tienes una empresa asociada.');
-      }
 
-      if (isAdmin && !form.empresaId) {
+      if (!form.empresaId) {
         throw new Error('Debes seleccionar una empresa.');
       }
 
       const formData = { ...form };
-      if (isAdmin) {
-        const selectedEmpresa = empresas.find((e) => e.id === form.empresaId);
-        if (!selectedEmpresa) throw new Error('Empresa no válida.');
-        formData.empresaId = selectedEmpresa.id;
-        formData.empresaNombre = selectedEmpresa.nombreEmpresa;
-      }
+      const selectedEmpresa = empresas.find((e) => e.id === form.empresaId);
+      if (!selectedEmpresa) throw new Error('Empresa no válida.');
+      formData.empresaId = selectedEmpresa.id;
+      formData.empresaNombre = selectedEmpresa.nombreEmpresa;
 
       if (isEditing) {
         await actualizarOfertaEmpresa(editingId, formData, user);
@@ -291,7 +286,7 @@ export const EmpresaOfertasAdmin = () => {
           </h2>
 
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isAdmin && (
+            {(isAdmin || user?.rol === 'empleado') && (
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Seleccionar Empresa *
