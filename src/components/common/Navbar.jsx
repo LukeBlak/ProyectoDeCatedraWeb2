@@ -1,15 +1,18 @@
 // src/components/common/Navbar.jsx
 
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
+import cartIcon from '../../img/cart-icon.svg';
 
 export const Navbar = () => {
   const [menuAbierto, setMenuAbierto] = useState(false);
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [busqueda, setBusqueda] = useState('');
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const { carrito } = useCart();
+  const location = useLocation();
   
   const carritoItemsCount = carrito?.reduce((total, item) => total + item.cantidad, 0) || 0;
 
@@ -21,6 +24,20 @@ export const Navbar = () => {
     logout();
     setMenuAbierto(false);
     navigate('/');
+  };
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    setBusqueda(searchParams.get('q') || '');
+  }, [location.search]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+
+    const termino = busqueda.trim();
+    setMenuAbierto(false);
+    setDropdownAbierto(false);
+    navigate(termino ? `/ofertas?q=${encodeURIComponent(termino)}` : '/ofertas');
   };
 
   return (
@@ -43,17 +60,22 @@ export const Navbar = () => {
 
           {/* Buscador Desktop/Tablet */}
           <div className="hidden lg:flex flex-1 max-w-2xl">
-            <div className="relative w-full">
+            <form className="relative w-full" onSubmit={handleSearchSubmit}>
               <input
                 type="text"
                 placeholder="Buscar ofertas, restaurantes, spas..."
+                value={busqueda}
+                onChange={(event) => setBusqueda(event.target.value)}
                 className="w-full px-6 py-3 rounded-full bg-white/90 backdrop-blur text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-lg"
               />
-              <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-sky-500 to-emerald-500 text-white px-5 py-2 rounded-full hover:shadow-lg transition-all flex items-center gap-2">
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-sky-500 to-emerald-500 text-white px-5 py-2 rounded-full hover:shadow-lg transition-all flex items-center gap-2"
+              >
                 <img src="/icons/lupa.png" alt="" className="w-4 h-4" />
                 <span className="hidden xl:inline">Buscar</span>
               </button>
-            </div>
+            </form>
           </div>
 
           {/* Menú Desktop */}
@@ -64,7 +86,7 @@ export const Navbar = () => {
 
             {/* Ícono del Carrito Desktop */}
             <Link to="/carrito" className="relative text-white hover:text-sky-200 p-2 transition">
-              <span className="text-2xl">🛒</span>
+              <img src={cartIcon} alt="" className="w-7 h-7 object-contain" />
               {carritoItemsCount > 0 && (
                 <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
                   {carritoItemsCount}
@@ -225,16 +247,21 @@ export const Navbar = () => {
 
         {/* Buscador móvil (debajo del header) */}
         <div className="lg:hidden mt-4">
-          <div className="relative w-full">
+          <form className="relative w-full" onSubmit={handleSearchSubmit}>
             <input
               type="text"
               placeholder="Buscar ofertas..."
+              value={busqueda}
+              onChange={(event) => setBusqueda(event.target.value)}
               className="w-full px-4 py-3 pr-12 rounded-full bg-white/90 backdrop-blur text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-lg"
             />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-sky-500 to-emerald-500 text-white p-2 rounded-full hover:shadow-lg transition-all">
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-sky-500 to-emerald-500 text-white p-2 rounded-full hover:shadow-lg transition-all"
+            >
               <img src="/icons/lupa.png" alt="Buscar" className="w-5 h-5" />
             </button>
-          </div>
+          </form>
         </div>
       </nav>
 
@@ -301,7 +328,7 @@ export const Navbar = () => {
               onClick={() => setMenuAbierto(false)}
               className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-sky-50 rounded-lg transition font-medium"
             >
-              <span className="text-xl">🛒</span>
+              <img src={cartIcon} alt="" className="w-5 h-5 object-contain" />
               <span>Mi Carrito</span>
               {carritoItemsCount > 0 && (
                 <span className="ml-auto inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">

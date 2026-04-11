@@ -1,5 +1,6 @@
 import React from 'react';
 import { formatearFecha, formatearPrecio } from '../../utils/formatters';
+import cartIcon from '../../img/cart-icon.svg';
 
 export const CuponDetalle = ({ cupon, onDescargarPDF, onCerrar }) => {
   const calcularDescuento = () => {
@@ -125,7 +126,7 @@ export const CuponDetalle = ({ cupon, onDescargarPDF, onCerrar }) => {
           
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">🛒</span>
+              <img src={cartIcon} alt="" className="w-8 h-8 object-contain" />
               <div>
                 <p className="text-blue-900 font-semibold text-sm">Fecha de Compra</p>
                 <p className="text-blue-700 text-lg font-bold">

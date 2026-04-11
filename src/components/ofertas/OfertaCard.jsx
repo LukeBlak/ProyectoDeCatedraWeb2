@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { Button } from '../common/Button';
+import cartIcon from '../../img/cart-icon.svg';
 
 export const OfertaCard = ({ oferta }) => {
   const navigate = useNavigate();
@@ -164,7 +165,10 @@ export const OfertaCard = ({ oferta }) => {
             className={`w-full ${agregado ? 'bg-emerald-500 hover:bg-emerald-600 border-none' : ''}`}
             onClick={handleComprar}
           >
-            {agregado ? '¡Añadido! ✓' : '🛒 Comprar'}
+            <span className="inline-flex items-center gap-2">
+              <img src={cartIcon} alt="" className="w-5 h-5 object-contain" />
+              <span>{agregado ? '¡Añadido! ✓' : 'Comprar'}</span>
+            </span>
           </Button>
         )}
       </div>
