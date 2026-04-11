@@ -11,9 +11,12 @@ export const Home = () => {
     const [rubroSeleccionado, setRubroSeleccionado] = useState("todos");
     const navigate = useNavigate();
     
+    
     // cargar rubros y ofertas de firebase
     const { ofertas, rubros, loading, error } = useOfertas();
     const { agregarAlCarrito } = useCart();
+    const rubrosUnicos = [
+  ...new Set(rubros.map(r => r?.toLowerCase().trim()))
 
     const handleComprar = (o) => {
         const precioRegular = o.precioRegular || o.precioOriginal || 0;
@@ -44,16 +47,23 @@ export const Home = () => {
 
     const rubrosUI = [
       { id: "todos", nombre: "Todos" },
-      ...rubros.map(r => ({
+      ...rubrosUnicos.map(r => ({
         id: r,
-        nombre: r
+        nombre: r.charAt(0).toUpperCase() + r.slice(1)
       }))
     ];
 
   const ofertasFiltradas = ofertas.filter(o => {
-    if (!o.disponible) return false;
+    if (o.disponible !== undefined && o.disponible === false) {
+      return false;
+    }
+
     if (rubroSeleccionado === "todos") return true;
-    return o.rubro === rubroSeleccionado;
+
+    return (
+      o.rubro?.toLowerCase().trim() ===
+      rubroSeleccionado.toLowerCase().trim()
+    );
   });
 
     // Manejar cambio de rubro
