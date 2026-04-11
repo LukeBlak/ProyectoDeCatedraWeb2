@@ -5,24 +5,31 @@ import { Footer } from "../components/common/Footer";
 import { Button } from "../components/common/Button";
 import { useNavigate } from "react-router-dom";
 import { useOfertas } from "../hooks/useOfertas";
-
+import { useCart } from "../hooks/useCart";
 export const Home = () => {
     const [rubroSeleccionado, setRubroSeleccionado] = useState("todos");
     const navigate = useNavigate();
     
     // cargar rubros y ofertas de firebase
     const { ofertas, rubros, loading, error } = useOfertas();
+    const { agregarAlCarrito } = useCart();
 
-    //  Función placeholder para añadir al carrito
-    const handleComprar = (oferta) => {
-        console.log('🛒 [HOME] Añadiendo al carrito:', {
-            id: oferta.id,
-            titulo: oferta.titulo,
-            precio: oferta.precioOferta || oferta.precioDescuento,
+    const handleComprar = (o) => {
+        const precioRegular = o.precioRegular || o.precioOriginal || 0;
+        const precioOferta = o.precioOferta || o.precioDescuento || 0;
+        const imagen = o.imagen || o.img || o.icono || '';
+
+        agregarAlCarrito({
+            id: o.id,
+            titulo: o.titulo,
+            empresa: o.empresa || o.rubro || 'Empresa',
+            precioOferta: precioOferta,
+            precioRegular: precioRegular,
+            icono: imagen,
             cantidad: 1
         });
-        // Por ahora, redirigimos al checkout como fallback
-        navigate(`/checkout/${oferta.id}`);
+        
+        alert(`¡${o.titulo} se agregó al carrito!`);
     };
 
     // Rubros con iconos (se mantienen estáticos para el diseño)

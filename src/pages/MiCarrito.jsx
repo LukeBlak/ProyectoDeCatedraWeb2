@@ -1,13 +1,52 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Header } from '../components/common/Header';
 import { Footer } from '../components/common/Footer';
 import { Button } from '../components/common/Button';
 import { useCart } from '../hooks/useCart';
-import { Link } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { Link, useNavigate } from 'react-router-dom';
+import { db } from '../config/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export const MiCarrito = () => {
-    const { carrito, eliminarDelCarrito, actualizarCantidad, calcularTotales } = useCart();
+    const { carrito, eliminarDelCarrito, actualizarCantidad, calcularTotales, vaciarCarrito } = useCart();
+    const { user } = useAuth();
     const totales = calcularTotales();
+    const navigate = useNavigate();
+
+    const [showModal, setShowModal] = useState(false);
+    const [procesando, setProcesando] = useState(false);
+    const [pagoExitoso, setPagoExitoso] = useState(false);
+
+    const handleProcesarPago = async () => {
+        if (!user) {
+            alert('Debes iniciar sesión para realizar la compra');
+            navigate('/login');
+            return;
+        }
+
+        setProcesando(true);
+        try {
+            const pedidoRef = collection(db, 'pedidos');
+            await addDoc(pedidoRef, {
+                usuarioId: user.uid || user.id || 'anonimo',
+                usuarioNombre: user.nombres || '',
+                usuarioEmail: user.email || '',
+                items: carrito,
+                totales: totales,
+                fecha: serverTimestamp(),
+                estado: 'completado'
+            });
+
+            setProcesando(false);
+            setPagoExitoso(true);
+            vaciarCarrito();
+        } catch (error) {
+            console.error('Error al procesar el pago', error);
+            alert('Ocurrió un error al procesar el pago. Revisa la consola.');
+            setProcesando(false);
+        }
+    };
 
     return (
         <>
@@ -136,7 +175,12 @@ export const MiCarrito = () => {
                                     <span className="text-emerald-600">${totales.total.toFixed(2)}</span>
                                 </div>
 
-                                <Button className="w-full mb-3">Ir al checkout</Button>
+                                <Button 
+                                    className="w-full mb-3" 
+                                    onClick={() => setShowModal(true)}
+                                >
+                                    Ir al checkout
+                                </Button>
                                 <Link
                                     to="/ofertas"
                                     className="block w-full text-center text-sky-600 font-semibold hover:text-sky-700 py-2"
@@ -148,6 +192,70 @@ export const MiCarrito = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Checkout Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative">
+                        {pagoExitoso ? (
+                            <div className="text-center">
+                                <div className="text-6xl mb-4 text-emerald-500">✅</div>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-2">¡Pago Exitoso!</h2>
+                                <p className="text-gray-600 mb-6">Tu orden ha sido procesada y guardada correctamente.</p>
+                                <Button className="w-full" onClick={() => {
+                                    setShowModal(false);
+                                    navigate('/mis-cupones'); // Redirige a los cupones si existe
+                                }}>
+                                    Ver mis cupones
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
+                                <button 
+                                    onClick={() => !procesando && setShowModal(false)}
+                                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                                    disabled={procesando}
+                                >
+                                    ✕
+                                </button>
+                                <h2 className="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">Confirmar Pago</h2>
+                                
+                                <div className="space-y-4 mb-8">
+                                    <div className="flex justify-between items-center text-gray-600">
+                                        <span>Total a pagar</span>
+                                        <span className="text-2xl font-bold text-emerald-600">${totales.total.toFixed(2)}</span>
+                                    </div>
+                                    <p className="text-sm text-gray-500 bg-gray-50 p-3 rounded-lg border">
+                                        Al hacer clic en pagar, se creará un pedido en el sistema simulando una transacción real y se conectará a Firebase Firestore.
+                                    </p>
+                                </div>
+
+                                <div className="flex gap-3">
+                                    <button 
+                                        className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
+                                        onClick={() => setShowModal(false)}
+                                        disabled={procesando}
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button 
+                                        className={`flex-1 flex justify-center items-center text-white font-bold py-3 rounded-xl transition ${procesando ? 'bg-sky-400 cursor-not-allowed' : 'bg-sky-600 hover:bg-sky-700'}`}
+                                        onClick={handleProcesarPago}
+                                        disabled={procesando}
+                                    >
+                                        {procesando ? (
+                                            <span className="animate-spin text-xl">⏳</span>
+                                        ) : (
+                                            'Pagar Ahora'
+                                        )}
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <Footer />
         </>
     );
