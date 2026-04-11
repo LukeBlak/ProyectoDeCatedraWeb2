@@ -1,9 +1,12 @@
-// src/components/ofertas/OfertaCard.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../hooks/useCart';
+import { Button } from '../common/Button';
 
 export const OfertaCard = ({ oferta }) => {
   const navigate = useNavigate();
+  const { agregarAlCarrito } = useCart();
+  const [agregado, setAgregado] = useState(false);
   
   const {
     id,
@@ -38,6 +41,26 @@ export const OfertaCard = ({ oferta }) => {
     return colores[rubro?.toLowerCase()] || 'from-purple-400 to-pink-500';
   };
 
+  const handleComprar = (e) => {
+    e.stopPropagation();
+    const precioRegular = oferta.precioRegular || oferta.precioOriginal || 0;
+    const precioOferta = oferta.precioOferta || oferta.precioDescuento || 0;
+    const imagen = oferta.imagen || oferta.img || oferta.icono || '';
+
+    agregarAlCarrito({
+      id: oferta.id,
+      titulo: oferta.titulo,
+      empresa: oferta.empresa || oferta.rubro || 'Empresa',
+      precioOferta: precioOferta,
+      precioRegular: precioRegular,
+      icono: imagen,
+      cantidad: 1
+    });
+
+    setAgregado(true);
+    setTimeout(() => setAgregado(false), 2000);
+  };
+
   return (
     <div 
       onClick={handleClick}
@@ -68,12 +91,19 @@ export const OfertaCard = ({ oferta }) => {
           </span>
         </div>
 
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center mb-4">
           <span className="text-sm text-green-600 font-semibold">
             ¡Ahorras ${(precioOriginal - precioDescuento)?.toFixed(2)}!
           </span>
           <span className="text-xs text-gray-500">Vence: {fechaExp}</span>
         </div>
+
+        <Button 
+          className={`w-full ${agregado ? 'bg-emerald-500 hover:bg-emerald-600 border-none' : ''}`}
+          onClick={handleComprar}
+        >
+          {agregado ? '¡Añadido! ✓' : '🛒 Comprar'}
+        </Button>
       </div>
     </div>
   );
