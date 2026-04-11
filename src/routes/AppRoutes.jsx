@@ -1,3 +1,4 @@
+import EmpleadoPanel from '../pages/EmpleadoPanel';
 // src/routes/AppRoutes.jsx
 
 import React from 'react';
@@ -47,6 +48,16 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute>
             <MiPerfil />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Rutas Protegidas - Solo Empleado */}
+      <Route
+        path="/empleado"
+        element={
+          <ProtectedRoute allowedRoles={['empleado']}>
+            <EmpleadoPanel />
           </ProtectedRoute>
         }
       />
@@ -105,7 +116,7 @@ export const AppRoutes = () => {
         <Route
           path="/admin/rubros"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin', 'empleado']}>
               <VerRubros />
             </ProtectedRoute>
           }
@@ -113,7 +124,7 @@ export const AppRoutes = () => {
         <Route
           path="/admin/rubros/nuevo"
           element={
-            <ProtectedRoute allowedRoles={['admin']}>
+            <ProtectedRoute allowedRoles={['admin', 'empleado']}>
               <CrearRubro />
             </ProtectedRoute>
           }

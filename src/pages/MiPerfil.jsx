@@ -158,6 +158,17 @@ export const MiPerfil = () => {
             </div>
           )}
 
+          {/* Acceso rápido a panel según rol */}
+          {user?.rol === 'empleado' && (
+            <div className="bg-blue-50 border-l-4 border-blue-400 rounded-xl p-4 mb-6 flex items-center gap-4">
+              <span className="text-3xl">🧑‍💼</span>
+              <div>
+                <div className="font-semibold text-blue-700 mb-1">Acceso rápido</div>
+                <a href="/empleado" className="text-blue-600 hover:underline font-bold">Ir al Panel de Empleado</a>
+              </div>
+            </div>
+          )}
+
           {/* Información Personal */}
           <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
             <div className="flex justify-between items-center mb-6">

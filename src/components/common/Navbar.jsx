@@ -132,6 +132,17 @@ export const Navbar = () => {
                           <img src="/icons/cupon.png" alt="" className="w-5 h-5" />
                           <span>Mis Cupones</span>
                         </Link>
+                        {/* Panel de Empleado para rol empleado */}
+                        {user?.rol === 'empleado' && (
+                          <Link
+                            to="/empleado"
+                            onClick={() => setDropdownAbierto(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-emerald-700 hover:bg-emerald-50 transition border-t border-gray-200"
+                          >
+                            <span className="text-lg">🧑‍💼</span>
+                            <span>Panel de Empleado</span>
+                          </Link>
+                        )}
                         {puedeGestionarOfertasEmpresa && (
                           <Link
                             to="/empresa/ofertas"

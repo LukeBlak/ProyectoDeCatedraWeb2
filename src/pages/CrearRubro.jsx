@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { addRubro } from '../services/rubrosService';
 
 const CrearRubro = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [label, setLabel] = useState('');
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
@@ -41,8 +43,11 @@ const CrearRubro = () => {
       </div>
       {/* Botón de retorno */}
       <div className="flex justify-center mb-8">
-        <button className="inline-flex items-center gap-2 bg-gray-100 text-blue-400 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition" onClick={() => navigate('/admin')}>
-          <span className="text-xl">←</span> Volver al Panel de Admin
+        <button
+          className="inline-flex items-center gap-2 bg-gray-100 text-blue-400 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition"
+          onClick={() => navigate(user?.rol === 'empleado' ? '/empleado' : '/admin')}
+        >
+          <span className="text-xl">←</span> Volver al Panel de {user?.rol === 'empleado' ? 'Empleado' : 'Admin'}
         </button>
       </div>
       {/* Formulario centrado */}

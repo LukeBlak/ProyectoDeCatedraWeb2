@@ -183,8 +183,8 @@ export const getRubros = async () => {
 export const getOfertasEmpresaAdmin = async (user) => {
   if (!user) return [];
 
-  if (user?.rol === 'admin') {
-    // Admin: ver todas las ofertas sin filtrar
+  if (user?.rol === 'admin' || user?.rol === 'empleado') {
+    // Admin y empleado: ver todas las ofertas sin filtrar
     const ofertasCol = collection(db, COLLECTION_NAME);
     const q = query(ofertasCol, orderBy('fechaExpiracion', 'asc'));
     const ofertaSnapshot = await getDocs(q);

@@ -1,12 +1,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 import { getRubros, addRubro } from '../services/rubrosService';
 import { doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 
 const VerRubros = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [rubros, setRubros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
@@ -88,8 +90,13 @@ const VerRubros = () => {
       </div>
       {/* Botón de retorno */}
       <div className="flex justify-center mb-8">
-        <button className="btn-back flex items-center gap-2 text-lg" onClick={() => navigate('/admin')}>
-          <span className="inline-flex items-center gap-2 bg-gray-100 text-blue-400 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition">← Volver al Panel de Admin</span>
+        <button
+          className="btn-back flex items-center gap-2 text-lg"
+          onClick={() => navigate(user?.rol === 'empleado' ? '/empleado' : '/admin')}
+        >
+          <span className="inline-flex items-center gap-2 bg-gray-100 text-blue-400 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition">
+            ← Volver al Panel de {user?.rol === 'empleado' ? 'Empleado' : 'Admin'}
+          </span>
         </button>
       </div>
       {/* Lista centrada */}

@@ -238,12 +238,21 @@ export const EmpresaOfertasAdmin = () => {
             </p>
           </div>
 
-          <Link
-            to="/admin"
-            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
-          >
-            Volver al panel de admin
-          </Link>
+          {user?.rol === 'empleado' ? (
+            <Link
+              to="/empleado"
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            >
+              Volver al panel de empleado
+            </Link>
+          ) : (
+            <Link
+              to="/admin"
+              className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
+            >
+              Volver al panel de admin
+            </Link>
+          )}
         </div>
 
         {error && (
