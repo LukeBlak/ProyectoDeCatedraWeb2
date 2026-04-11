@@ -60,7 +60,7 @@ const HistorialOfertas = () => {
       {/* Botón de retorno */}
       <div className="flex justify-center mb-8">
         <button className="btn-back flex items-center gap-2 text-lg" onClick={() => navigate('/admin')}>
-          <span className="text-xl">←</span> Volver al Panel de Admin
+          <span className="inline-flex items-center gap-2 bg-gray-100 text-blue-400 px-5 py-2 rounded-full shadow-md hover:shadow-xl transition">← Volver al Panel de Admin</span>
         </button>
       </div>
       {/* Barra de búsqueda y filtros */}

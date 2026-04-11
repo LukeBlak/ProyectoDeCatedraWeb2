@@ -1,3 +1,16 @@
+// Componente InputField local para campos de formulario
+const InputField = ({ label, value, onChange, type = 'text', ...rest }) => (
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-2">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+      {...rest}
+    />
+  </div>
+);
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Header } from '../components/common/Header';
@@ -212,8 +225,236 @@ export const EmpresaOfertasAdmin = () => {
   };
 
   return (
-    <>
-      {/* ...todo el JSX del componente, ya presente... */}
-    </>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-emerald-50">
+      <Header />
+
+      <div className="container mx-auto px-4 py-8 space-y-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 border border-sky-100 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-800">Gestión de Ofertas de Empresa</h1>
+            <p className="text-gray-600 mt-2">
+              Administra ofertas de{' '}
+              {user?.empresa || user?.empresaNombre || user?.nombreEmpresa || 'tu empresa'}.
+            </p>
+          </div>
+
+          <Link
+            to="/admin"
+            className="inline-flex items-center justify-center rounded-xl bg-sky-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-sky-700"
+          >
+            Volver al panel de admin
+          </Link>
+        </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4">
+            {error}
+          </div>
+        )}
+
+        <section className="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">
+            {isEditing ? 'Editar Oferta' : 'Nueva Oferta'}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {isAdmin && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Seleccionar Empresa *
+                </label>
+                <select
+                  value={form.empresaId}
+                  onChange={(e) => setForm({ ...form, empresaId: e.target.value })}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  required
+                >
+                  <option value="">-- Selecciona una empresa --</option>
+                  {empresas.map((empresa) => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nombreEmpresa} ({empresa.rubroEmpresa})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <InputField
+              label="Título"
+              value={form.titulo}
+              onChange={(value) => setForm({ ...form, titulo: sanitizeByField('titulo', value) })}
+              required
+            />
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Rubro</label>
+              <select
+                value={form.rubro}
+                onChange={(e) => setForm({ ...form, rubro: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                required
+                disabled={loadingRubros}
+              >
+                <option value="">{loadingRubros ? 'Cargando rubros...' : '-- Selecciona un rubro --'}</option>
+                {rubros.map((rubro) => (
+                  <option key={rubro.value || rubro.id} value={rubro.value || rubro.id}>
+                    {rubro.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <InputField
+              label="Precio original"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.precioOriginal}
+              onChange={(value) => setForm({ ...form, precioOriginal: sanitizeByField('precioOriginal', value) })}
+              required
+            />
+            <InputField
+              label="Precio descuento"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.precioDescuento}
+              onChange={(value) => setForm({ ...form, precioDescuento: sanitizeByField('precioDescuento', value) })}
+              required
+            />
+            <InputField
+              label="Fecha de expiración"
+              type="date"
+              min={new Date().toISOString().split('T')[0]}
+              value={form.fechaExpiracion}
+              onChange={(value) => setForm({ ...form, fechaExpiracion: value })}
+              required
+            />
+            <InputField
+              label="URL imagen"
+              value={form.imagen}
+              onChange={(value) => setForm({ ...form, imagen: sanitizeByField('imagen', value) })}
+            />
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Descripción
+              </label>
+              <textarea
+                value={form.descripcion}
+                onChange={(e) => setForm({ ...form, descripcion: sanitizeByField('descripcion', e.target.value) })}
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                required
+              />
+            </div>
+
+            {/* El campo 'disponible' solo se muestra en edición, nunca al crear */}
+            {isEditing && (
+              <div className="md:col-span-2 flex items-center gap-2">
+                <input
+                  id="disponible"
+                  type="checkbox"
+                  checked={form.disponible}
+                  onChange={(e) => setForm({ ...form, disponible: e.target.checked })}
+                />
+                <label htmlFor="disponible" className="text-sm text-gray-700">
+                  Oferta disponible para compra
+                </label>
+              </div>
+            )}
+
+            <div className="md:col-span-2 flex flex-wrap gap-3">
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-gradient-to-r from-sky-600 to-emerald-500 text-white px-5 py-2.5 rounded-lg font-semibold hover:opacity-95 disabled:opacity-60"
+              >
+                {saving ? 'Guardando...' : isEditing ? 'Actualizar oferta' : 'Crear oferta'}
+              </button>
+
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={clearForm}
+                  className="bg-gray-100 text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-200"
+                >
+                  Cancelar edición
+                </button>
+              )}
+            </div>
+          </form>
+        </section>
+
+        <section className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+          <div className="p-5 border-b bg-gradient-to-r from-sky-50 to-emerald-50 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-gray-800">Ofertas publicadas</h2>
+            <span className="text-sm text-gray-600">Total: {ofertas.length}</span>
+          </div>
+
+          {loading ? (
+            <div className="p-10 text-center text-gray-600">Cargando ofertas...</div>
+          ) : ofertas.length === 0 ? (
+            <div className="p-10 text-center text-gray-500">
+              Aún no hay ofertas registradas.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-700">
+                  <tr>
+                    <th className="text-left px-4 py-3">Título</th>
+                    <th className="text-left px-4 py-3">Rubro</th>
+                    <th className="text-right px-4 py-3">Precio</th>
+                    <th className="text-right px-4 py-3">Oferta</th>
+                    <th className="text-left px-4 py-3">Estado</th>
+                    <th className="text-right px-4 py-3">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ofertas.map((oferta) => (
+                    <tr key={oferta.id} className="border-t">
+                      <td className="px-4 py-3 font-medium text-gray-800">{oferta.titulo}</td>
+                      <td className="px-4 py-3 capitalize">{oferta.rubro}</td>
+                      <td className="px-4 py-3 text-right">
+                        ${Number(oferta.precioOriginal || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-emerald-600 font-semibold">
+                        ${Number(oferta.precioDescuento || 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
+                            oferta.disponible
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                        >
+                          {oferta.disponible ? 'Activa' : 'Inactiva'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right space-x-2">
+                        <button
+                          onClick={() => startEdit(oferta)}
+                          className="bg-sky-100 text-sky-700 px-3 py-1.5 rounded-lg hover:bg-sky-200"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          onClick={() => handleDelete(oferta.id)}
+                          className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200"
+                        >
+                          Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      </div>
+
+      <Footer />
+    </div>
   );
 }
