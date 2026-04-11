@@ -258,6 +258,7 @@ const fetchCupones = useCallback(async () => {
         cuponesCanjeados,
         cuponesVencidos,
         cargando,
+        loading: cargando,
         error,
         estadisticas,
         fetchCupones,
@@ -268,4 +269,4 @@ const fetchCupones = useCallback(async () => {
         canjearCupon,
         validarCupon,
     };
-};
+};

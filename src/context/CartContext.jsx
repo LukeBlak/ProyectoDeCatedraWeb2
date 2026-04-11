@@ -1,13 +1,15 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { db } from '../config/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   
+  const skipSyncRef = useRef(false);
+
   const [carrito, setCarrito] = useState(() => {
     try {
       const item = window.localStorage.getItem('cuponera_cart');
@@ -53,12 +55,18 @@ export const CartProvider = ({ children }) => {
 
   // Efecto para guardar en localStorage Y en firestore ante cada cambio
   useEffect(() => {
+    // Si se marcó para saltarse la sincronización (después de vaciar), no re-crear el doc
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
+    }
+
     try {
       window.localStorage.setItem('cuponera_cart', JSON.stringify(carrito));
       
       const currentUserId = user?.uid || user?.id;
       // Sincronizar con Firebase si el usuario está logueado
-      if (currentUserId) {
+      if (currentUserId && carrito.length > 0) {
         const syncCartToFirebase = async () => {
           try {
             const cartRef = doc(db, 'carritos', currentUserId);
@@ -104,8 +112,22 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  const vaciarCarrito = () => {
+  const vaciarCarrito = async () => {
+    skipSyncRef.current = true;
     setCarrito([]);
+    // Limpiar localStorage
+    window.localStorage.removeItem('cuponera_cart');
+    // Eliminar el documento del carrito en Firebase
+    const currentUserId = user?.uid || user?.id;
+    if (currentUserId) {
+      try {
+        const cartRef = doc(db, 'carritos', currentUserId);
+        await deleteDoc(cartRef);
+        console.log('🗑️ Carrito eliminado de Firebase');
+      } catch (error) {
+        console.error('Error eliminando carrito de Firebase:', error);
+      }
+    }
   };
 
   const calcularTotales = () => {

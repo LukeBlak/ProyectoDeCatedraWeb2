@@ -158,8 +158,14 @@ export const cuponesService = {
   // Canjear un cupón
   canjearCupon: async (codigo, dui) => {
     try {
-      // Busca el cupón por código
-      const cupon = await cuponesService.getCuponByCodigo(codigo);
+      // Busca el cupón por código (retorna array)
+      const cupones = await cuponesService.getCuponByCodigo(codigo);
+      
+      if (!cupones || cupones.length === 0) {
+        throw new Error('Cupón no encontrado');
+      }
+
+      const cupon = cupones[0];
       
       // Validaciones 
 
